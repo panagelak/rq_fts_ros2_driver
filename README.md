@@ -173,8 +173,4 @@ Furthermore **an optional WrenchStamped subscriber is created which will append 
 
 Most of the code is directly copied by the original ros1 driver [Robotiq ros driver](https://github.com/ros-industrial/robotiq) so the original licenses and maintainers remain.
 
-# Acknowledgment
 
-## ros2 Contributors
-
-[Panagiotis Angelakis](https://github.com/panagelak)
