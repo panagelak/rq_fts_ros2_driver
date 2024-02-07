@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <xacro:macro name="robotiq_ft300" params="parent tf_prefix *origin">
+
+        <!-- mount the fts to the robot -->
+        <joint name="${tf_prefix}ft300_fix" type="fixed">
+            <xacro:insert_block name="origin" />
+            <parent link="${tf_prefix}${parent}" />
+            <child link="${tf_prefix}ft300_mounting_plate" />
+        </joint>
+
+       
+        <!-- Link representing the FT300 force-torque sensor -->
+        <link name="${tf_prefix}ft300_sensor">
+            <inertial>
+                <origin xyz="0 0 ${-17 / 1000}" rpy="0 0 0"/>
+                <mass value="0.300"/>
+                <inertia ixx="${262 / 1000000}" ixy="0" ixz="${1 / 1000000}" iyy="${265 / 1000000}" iyx="0" iyz="${1 / 1000000}" izz="${219 / 1000000}" izx="${-1 / 1000000}" izy="${1 / 1000000}"/>
+            </inertial>
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="file://$(find robotiq_ft_sensor_description)/meshes/visual/robotiq_ft300.STL"/>
+                </geometry>
+                <material name="Robotiq-Black">
+                    <color rgba="0.2 0.2 0.2 1.0"/>
+                </material>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="file://$(find robotiq_ft_sensor_description)/meshes/collision/robotiq_ft300.STL"/>
+                </geometry>
+            </collision>
+        </link>
+        
+        <!-- Link representing the FT300 mounting plate -->
+        <link name="${tf_prefix}ft300_mounting_plate">
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="file://$(find robotiq_ft_sensor_description)/meshes/visual/mountings/robotiq_ft300-G-062-COUPLING_G-50-4M6-1D6_20181119.STL"/>
+                </geometry>
+                <material name="Robotiq-Grey">
+                    <color rgba="0.4 0.4 0.4 1.0"/>
+                </material>
+            </visual>
+
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <mesh filename="file://$(find robotiq_ft_sensor_description)/meshes/collision/mountings/robotiq_ft300-G-062-COUPLING_G-50-4M6-1D6_20181119.STL"/>
+                </geometry>
+            </collision>
+        </link>
+
+         <!-- Connect force sensor with mounting/coupling plate -->
+        <joint name="${tf_prefix}ft300_mounting_plate" type="fixed">
+            <origin xyz="0 0 0.0415" rpy="0 ${pi} 0"/> 
+            <parent link="${tf_prefix}ft300_mounting_plate" />
+            <child link="${tf_prefix}ft300_sensor" />
+        </joint>
+
+        <joint name="${tf_prefix}measurment_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="0 ${pi} ${-pi/2}" />
+            <parent link="${tf_prefix}ft300_sensor" />
+            <child link="${tf_prefix}robotiq_ft_frame_id" />
+        </joint>
+
+        <link name="${tf_prefix}robotiq_ft_frame_id"/>
+
+    </xacro:macro>
+</robot>

@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="3">
+    <name>robotiq_ft_sensor_description</name>
+    <version>2.0.0</version>
+    <description>Description Package for Robotiq Force Torque Sensor</description>
+    <!-- robotiq -->
+    <maintainer email="ros@robotiq.com">Jean-Philippe Roberge</maintainer>
+    <author email="jsavoie20@gmail.com">Jonathan Savoie</author>
+    <url type="website">http://ros.org/wiki/robotiq</url>
+    <!---->
+    <maintainer email="panagiotis.angelakis.robot@gmail.com">Panagiotis Angelakis</maintainer>
+    <author>Panagiotis Angelakis</author>
+    <!-- license -->
+    <license>BSD</license>
+    <buildtool_depend>ament_cmake</buildtool_depend>
+    <exec_depend>force_torque_sensor_broadcaster</exec_depend>
+    <exec_depend>forward_command_controller</exec_depend>
+    <exec_depend>joint_state_broadcaster</exec_depend>
+    <exec_depend>joint_trajectory_controller</exec_depend>
+    <exec_depend>joint_state_publisher_gui</exec_depend>
+    <exec_depend>robot_state_publisher</exec_depend>
+    <exec_depend>rviz2</exec_depend>
+    <exec_depend>xacro</exec_depend>
+    <export>
+        <build_type>ament_cmake</build_type>
+    </export>
+</package>

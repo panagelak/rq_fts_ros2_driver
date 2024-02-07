@@ -1,0 +1,9 @@
+<library path="robotiq_ft_sensor_hardware">
+    <class name="robotiq_ft_sensor_hardware/RobotiqFTSensorHardware"
+           type="robotiq_ft_sensor_hardware::RobotiqFTSensorHardware"
+           base_class_type="hardware_interface::SensorInterface">
+        <description>
+      Implements a Hardware Interface plugin for the Robotiq Force Torque Sensors ft300 and fts150
+    </description>
+    </class>
+</library>
