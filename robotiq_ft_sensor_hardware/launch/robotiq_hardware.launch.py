@@ -20,6 +20,7 @@ def launch_setup(context, *args, **kwargs):
     tf_prefix = LaunchConfiguration("tf_prefix")
 
     max_retries = LaunchConfiguration("max_retries")
+    read_rate = LaunchConfiguration("read_rate")
     ftdi_id = LaunchConfiguration("ftdi_id")
     use_fake_mode = LaunchConfiguration("use_fake_mode")
     use_add_fts_wrench = LaunchConfiguration("use_add_fts_wrench")
@@ -51,6 +52,8 @@ def launch_setup(context, *args, **kwargs):
             " ",
             "max_retries:=",
             max_retries,
+            "read_rate:=",
+            read_rate,
             " ",
             "ftdi_id:=",  # cannot pass empty string to hardware and will remove the first char if size is 1
             ftdi_id,
@@ -156,6 +159,7 @@ def generate_launch_description():
     declared_arguments.append(DeclareLaunchArgument("tf_prefix", default_value='""'))
 
     declared_arguments.append(DeclareLaunchArgument("max_retries", default_value="100"))
+    declared_arguments.append(DeclareLaunchArgument("read_rate", default_value="10"))
     # cannot pass empty string to hardware and will remove the first char if size is 1
     declared_arguments.append(DeclareLaunchArgument("ftdi_id", default_value="_"))
 

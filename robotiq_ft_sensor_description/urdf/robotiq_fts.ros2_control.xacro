@@ -7,6 +7,7 @@
     use_add_fts_wrench:=true
     add_fts_wrench_topic:=add_fts_wrench
     max_retries:=1
+    read_rate:=10
     ftdi_id:=''
     tf_prefix
   ">
@@ -17,6 +18,7 @@
           <param name="use_add_fts_wrench">${use_add_fts_wrench}</param>
           <param name="add_fts_wrench_topic">${add_fts_wrench_topic}</param>
           <param name="max_retries">${max_retries}</param>
+          <param name="read_rate">${read_rate}</param>
           <param name="ftdi_id">${ftdi_id}</param>
       </hardware>
       <sensor name="${tf_prefix}robotiq_fts_sensor">

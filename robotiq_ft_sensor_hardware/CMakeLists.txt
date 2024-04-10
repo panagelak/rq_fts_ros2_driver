@@ -11,8 +11,14 @@ add_compile_options(-Wno-unused-parameter)
 # find dependencies
 find_package(ament_cmake REQUIRED)
 
-set(THIS_PACKAGE_INCLUDE_DEPENDS rclcpp hardware_interface pluginlib
-                                 robotiq_ft_sensor_interfaces geometry_msgs)
+set(THIS_PACKAGE_INCLUDE_DEPENDS
+    geometry_msgs
+    rclcpp hardware_interface pluginlib
+    realtime_tools
+    robotiq_ft_sensor_interfaces
+    std_srvs
+)
+
 foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
 endforeach()

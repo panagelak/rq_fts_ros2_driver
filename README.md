@@ -107,6 +107,7 @@ The only requirement for the hardware interfaces to be dynamically loaded and ru
     use_add_fts_wrench:=true
     add_fts_wrench_topic:=add_fts_wrench
     max_retries:=1
+    read_rate:=10
     ftdi_id:=''
   ">
     <ros2_control name="${name}robotiq_ft_sensor" type="sensor">
@@ -116,6 +117,7 @@ The only requirement for the hardware interfaces to be dynamically loaded and ru
           <param name="use_add_fts_wrench">${use_add_fts_wrench}</param>
           <param name="add_fts_wrench_topic">${add_fts_wrench_topic}</param>
           <param name="max_retries">${max_retries}</param>
+          <param name="read_rate">${read_rate}</param>
           <param name="ftdi_id">${ftdi_id}</param>
       </hardware>
       <sensor name="robotiq_fts_sensor">
@@ -144,6 +146,7 @@ Example to use the robotiq fts hardware interface in combination with your robot
   <xacro:arg name="use_add_fts_wrench" default="true"/>
   <xacro:arg name="add_fts_wrench_topic" default="add_fts_wrench"/>
   <xacro:arg name="max_retries" default="100"/>
+  <xacro:arg name="read_rate" default="10"/>
   <xacro:arg name="ftdi_id" default=""/>
   <xacro:arg name="tf_prefix" default=""/>
 
@@ -157,6 +160,7 @@ Example to use the robotiq fts hardware interface in combination with your robot
       use_add_fts_wrench="$(arg use_add_fts_wrench)"
       add_fts_wrench_topic="$(arg add_fts_wrench_topic)"
       max_retries="$(arg max_retries)"
+      read_rate="$(arg read_rate)"
       ftdi_id="$(arg ftdi_id)"
   />
 

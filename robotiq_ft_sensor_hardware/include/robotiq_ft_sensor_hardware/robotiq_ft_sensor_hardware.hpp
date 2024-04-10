@@ -36,18 +36,21 @@
 #ifndef ROBOTIQ_FT_SENSOR__HARDWARE_INTERFACE_HPP_
 #define ROBOTIQ_FT_SENSOR__HARDWARE_INTERFACE_HPP_
 
+#include <memory>
+
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
 #include "hardware_interface/sensor_interface.hpp"
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/macros.hpp"
-// #include "robotiq_ft_sensor_interfaces/msg/ft_sensor.hpp"
+#include "realtime_tools/realtime_buffer.h"
 #include "robotiq_ft_sensor_interfaces/srv/sensor_accessor.hpp"
 #include "rq_sensor_state.h"
 #include <geometry_msgs/msg/wrench_stamped.hpp>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
+#include <std_srvs/srv/trigger.hpp>
 
 namespace robotiq_ft_sensor_hardware
 {
@@ -67,27 +70,21 @@ public:
   hardware_interface::return_type read(const rclcpp::Time& time, const rclcpp::Duration& period) override;
 
 private:
-  void wrenchAddCB(const geometry_msgs::msg::WrenchStamped::ConstSharedPtr& msg)
-  {
-    add_wrench_msg_ = *msg.get();
-  }
-  // Parameters for the RRBot simulation
+  void read_background();
 
   // Store the sensor states for the simulated robot
-  std::vector<double> hw_sensor_states_;
+  hardware_interface::ComponentInfo sensor_;
+  std::array<double, 6> hw_sensor_states_ = { std::numeric_limits<double>::quiet_NaN() };
+  realtime_tools::RealtimeBuffer<std::array<double, 6>> sensor_readings_;
   //=========== robotiq force torque
   rclcpp::Node::SharedPtr async_node_;
   std::unique_ptr<std::thread> node_thread_;
   rclcpp::executors::SingleThreadedExecutor executor_;
-  rclcpp::Service<robotiq_ft_sensor_interfaces::srv::SensorAccessor>::SharedPtr srv_sensor_accessor_;
-  rclcpp::Subscription<geometry_msgs::msg::WrenchStamped>::SharedPtr sub_add_wrench_;
-  geometry_msgs::msg::WrenchStamped add_wrench_msg_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr srv_zero_fts_;
   rclcpp::Logger logger_{ rclcpp::get_logger("RobotiqFTSensorHardware") };
   // urdf parameters
-  bool use_fake_mode_;
-  bool use_add_fts_wrench_;
-  std::string add_fts_wrench_topic_;
   int max_retries_ = 100;
+  int read_rate_ = 10;
   std::string ftdi_id_;
   //
   INT_8 bufStream_[512];
@@ -145,44 +142,17 @@ private:
       }
     }
   }
-  void set_zero()
+
+  bool set_zero(std::shared_ptr<std_srvs::srv::Trigger::Request> req,
+                std::shared_ptr<std_srvs::srv::Trigger::Response> res)
   {
     INT_8 buffer[512];
     std::string set_zero = "SET ZRO";
     decode_message_and_do((char*)set_zero.c_str(), buffer);
-  }
-  // robotiq_ft_sensor_interfaces::msg::FTSensor get_data(void) {
-  //   robotiq_ft_sensor_interfaces::msg::FTSensor msgStream;
 
-  //   msgStream.fx = rq_state_get_received_data(0);
-  //   msgStream.fy = rq_state_get_received_data(1);
-  //   msgStream.fz = rq_state_get_received_data(2);
-  //   msgStream.mx = rq_state_get_received_data(3);
-  //   msgStream.my = rq_state_get_received_data(4);
-  //   msgStream.mz = rq_state_get_received_data(5);
-
-  //   return msgStream;
-  // }
-  bool receiverCallback(std::shared_ptr<robotiq_ft_sensor_interfaces::srv::SensorAccessor::Request> req,
-                        std::shared_ptr<robotiq_ft_sensor_interfaces::srv::SensorAccessor::Response> res)
-  {
-    /// Support for old string-based interface
-    if (req->command.length())
-    {
-      RCLCPP_WARN_ONCE(rclcpp::get_logger("RobotiqFTSensorHardware"), "Usage of command-string is deprecated, please "
-                                                                      "use the numeric command_id");
-      RCLCPP_INFO(rclcpp::get_logger("RobotiqFTSensorHardware"), "I heard: [%s]", req->command.c_str());
-      INT_8 buffer[512];
-      decode_message_and_do((char*)req->command.c_str(), buffer);
-      res->res = buffer;
-      RCLCPP_INFO(rclcpp::get_logger("RobotiqFTSensorHardware"), "I send: [%s]", res->res.c_str());
-      return true;
-    }
-
-    /// New interface with numerical commands
-    decode_message_and_do(req, res);
     return true;
   }
+
   /// New interface with numerical commands
   bool decode_message_and_do(robotiq_ft_sensor_interfaces::srv::SensorAccessor::Request::SharedPtr req,
                              robotiq_ft_sensor_interfaces::srv::SensorAccessor::Response::SharedPtr res)
