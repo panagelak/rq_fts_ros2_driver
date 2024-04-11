@@ -106,12 +106,14 @@ void RobotiqFTSensorHardware::read_background()
 
     if (rq_state_got_new_message())
     {
-      hw_sensor_states_[0] = rq_state_get_received_data(0);
-      hw_sensor_states_[1] = rq_state_get_received_data(1);
-      hw_sensor_states_[2] = rq_state_get_received_data(2);
-      hw_sensor_states_[3] = rq_state_get_received_data(3);
-      hw_sensor_states_[4] = rq_state_get_received_data(4);
-      hw_sensor_states_[5] = rq_state_get_received_data(5);
+      sensor_reading_background[0] = rq_state_get_received_data(0);
+      sensor_reading_background[1] = rq_state_get_received_data(1);
+      sensor_reading_background[2] = rq_state_get_received_data(2);
+      sensor_reading_background[3] = rq_state_get_received_data(3);
+      sensor_reading_background[4] = rq_state_get_received_data(4);
+      sensor_reading_background
+
+          [5] = rq_state_get_received_data(5);
     }
   }
   sensor_readings_.writeFromNonRT(sensor_reading_background);
