@@ -69,13 +69,15 @@
 #define RQ_COM_MAX_STR_LENGTH 20
 #define RQ_COM_JAM_SIGNAL_CHAR 0xff
 #define RQ_COM_JAM_SIGNAL_LENGTH 50
-#define RQ_COM_TIMER_FOR_STREAM_DETECTION_MAX_VALUE 20 // 20 * 4ms =  80ms without bytes means that the stream is stopped
-#define RQ_COM_TIMER_FOR_VALID_STREAM_MAX_VALUE 40     // 40 * 4ms = 160ms without any valid message means that the communication is not working well
+#define RQ_COM_TIMER_FOR_STREAM_DETECTION_MAX_VALUE                                                                    \
+  20  // 20 * 4ms =  80ms without bytes means that the stream is stopped
+#define RQ_COM_TIMER_FOR_VALID_STREAM_MAX_VALUE                                                                        \
+  40  // 40 * 4ms = 160ms without any valid message means that the communication is not working well
 
 ////////////////////
 // Private variables
-static float rq_com_received_data[6] = {0.0};
-static float rq_com_received_data_offset[6] = {0.0};
+static float rq_com_received_data[6] = { 0.0 };
+static float rq_com_received_data_offset[6] = { 0.0 };
 
 static UINT_16 rq_com_computed_crc = 0;
 static UINT_16 rq_com_crc = 0;
@@ -108,24 +110,24 @@ static INT_8 rq_com_tentative_connexion(void);
 static void rq_com_send_jam_signal(void);
 static void rq_com_stop_stream_after_boot(void);
 
-static INT_32 rq_com_read_port(UINT_8 *const buf, UINT_32 buf_len);
-static INT_32 rq_com_write_port(UINT_8 const *const buf, UINT_32 buf_len);
+static INT_32 rq_com_read_port(UINT_8* const buf, UINT_32 buf_len);
+static INT_32 rq_com_write_port(UINT_8 const* const buf, UINT_32 buf_len);
 
 // Modbus functions
-static UINT_16 rq_com_compute_crc(UINT_8 const *adr, INT_32 length);
+static UINT_16 rq_com_compute_crc(UINT_8 const* adr, INT_32 length);
 static void rq_com_send_fc_03_request(UINT_16 base, UINT_16 n);
-static void rq_com_send_fc_16_request(INT_32 base, INT_32 n, UINT_8 const *const data);
-static INT_32 rq_com_wait_for_fc_03_echo(UINT_8 *const data);
+static void rq_com_send_fc_16_request(INT_32 base, INT_32 n, UINT_8 const* const data);
+static INT_32 rq_com_wait_for_fc_03_echo(UINT_8* const data);
 static INT_32 rq_com_wait_for_fc_16_echo(void);
-static INT_8 rq_com_send_fc_03(UINT_16 base, UINT_16 n, UINT_16 *const data);
-static INT_8 rq_com_send_fc_16(INT_32 base, INT_32 n, UINT_16 const *const data);
+static INT_8 rq_com_send_fc_03(UINT_16 base, UINT_16 n, UINT_16* const data);
+static INT_8 rq_com_send_fc_16(INT_32 base, INT_32 n, UINT_16 const* const data);
 
-static UINT_8 rq_com_identify_device(INT_8 const *const d_name);
+static UINT_8 rq_com_identify_device(INT_8 const* const d_name);
 
-#ifdef __unix__ // For Unix
+#ifdef __unix__  // For Unix
 static INT_32 fd_connexion = -1;
 static INT_8 set_com_attribs(INT_32 fd, speed_t speed);
-#elif defined(_WIN32) || defined(WIN32) // For Windows
+#elif defined(_WIN32) || defined(WIN32)  // For Windows
 HANDLE hSerial;
 #endif
 
@@ -139,53 +141,63 @@ HANDLE hSerial;
  *          and polls them to discover the sensor
  */
 
-INT_8 rq_sensor_com(const std::string &ftdi_id) {
+INT_8 rq_sensor_com(const std::string& ftdi_id)
+{
   UINT_8 device_found = 0;
   device_found = rq_com_identify_device(ftdi_id.c_str());
-  if (device_found == 0) {
+  if (device_found == 0)
+  {
     return -1;
   }
   return 0;
 }
 
-INT_8 rq_sensor_com() {
-#ifdef __unix__ // For Unix
+INT_8 rq_sensor_com()
+{
+#ifdef __unix__  // For Unix
   UINT_8 device_found = 0;
-  DIR *dir = NULL;
-  struct dirent *entrydirectory = NULL;
+  DIR* dir = NULL;
+  struct dirent* entrydirectory = NULL;
 
   // Close a previously opened connection to a device
   close(fd_connexion);
-  if ((dir = opendir("/sys/class/tty/")) == NULL) {
+  if ((dir = opendir("/sys/class/tty/")) == NULL)
+  {
     return -1;
   }
 
   // Loops through the files in the /sys/class/tty/ directory
-  while ((entrydirectory = readdir(dir)) != NULL && device_found == 0) {
+  while ((entrydirectory = readdir(dir)) != NULL && device_found == 0)
+  {
     // Look for a serial device
-    if (strstr(entrydirectory->d_name, "ttyS") || strstr(entrydirectory->d_name, "ttyUSB")) {
+    if (strstr(entrydirectory->d_name, "ttyS") || strstr(entrydirectory->d_name, "ttyUSB"))
+    {
       device_found = rq_com_identify_device(entrydirectory->d_name);
     }
   }
 
   closedir(dir);
 
-  if (device_found == 0) {
+  if (device_found == 0)
+  {
     return -1;
   }
-#elif defined(_WIN32) || defined(WIN32) // For Windows
+#elif defined(_WIN32) || defined(WIN32)  // For Windows
   DCB dcb;
   INT_32 i;
   INT_8 port[13];
-  for (i = 0; i < 256; i++) {
+  for (i = 0; i < 256; i++)
+  {
     sprintf(port, "\\\\.\\COM%d", i);
     hSerial = CreateFileA(port, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-    if (hSerial != INVALID_HANDLE_VALUE) {
+    if (hSerial != INVALID_HANDLE_VALUE)
+    {
       dcb.DCBlength = sizeof(DCB);
-      if (!GetCommState(hSerial, &dcb)) {
+      if (!GetCommState(hSerial, &dcb))
+      {
         CloseHandle(hSerial);
         hSerial = INVALID_HANDLE_VALUE;
-        continue; // Allows to start the loop again
+        continue;  // Allows to start the loop again
       }
       dcb.BaudRate = CBR_19200;
       dcb.ByteSize = 8;
@@ -206,22 +218,25 @@ INT_8 rq_sensor_com() {
       dcb.fAbortOnError = FALSE;
 
       /* Setup port */
-      if (!SetCommState(hSerial, &dcb)) {
+      if (!SetCommState(hSerial, &dcb))
+      {
         CloseHandle(hSerial);
-        continue; // Allows to start the loop again
+        continue;  // Allows to start the loop again
       }
-      COMMTIMEOUTS timeouts = {0};
+      COMMTIMEOUTS timeouts = { 0 };
       timeouts.ReadIntervalTimeout = 0;
       timeouts.ReadTotalTimeoutConstant = 1;
       timeouts.ReadTotalTimeoutMultiplier = 0;
       timeouts.WriteTotalTimeoutConstant = 1;
       timeouts.WriteTotalTimeoutMultiplier = 0;
-      if (!SetCommTimeouts(hSerial, &timeouts)) {
+      if (!SetCommTimeouts(hSerial, &timeouts))
+      {
         CloseHandle(hSerial);
         hSerial = INVALID_HANDLE_VALUE;
-        continue; // Allows to start the loop again
+        continue;  // Allows to start the loop again
       }
-      if (rq_com_tentative_connexion() == 1) {
+      if (rq_com_tentative_connexion() == 1)
+      {
         return 0;
       }
       CloseHandle(hSerial);
@@ -238,18 +253,21 @@ INT_8 rq_sensor_com() {
  * \brief Tries connecting to the sensor
  * \returns 1 if the connection attempt succeeds, -1 otherwise
  */
-static INT_8 rq_com_tentative_connexion() {
+static INT_8 rq_com_tentative_connexion()
+{
   INT_32 rc = 0;
   UINT_16 firmware_version[1];
   UINT_8 retries = 0;
 
-  while (retries < 5 && rq_com_stream_detected == false) {
+  while (retries < 5 && rq_com_stream_detected == false)
+  {
     rq_com_listen_stream();
     retries++;
   }
 
   rq_com_listen_stream();
-  if (rq_com_stream_detected) {
+  if (rq_com_stream_detected)
+  {
     rq_com_stop_stream_after_boot();
   }
 
@@ -259,8 +277,10 @@ static INT_8 rq_com_tentative_connexion() {
   // If the device returns an F as the first character of the fw version,
   // we consider its a sensor
   rc = rq_com_send_fc_03(REGISTER_FIRMWARE_VERSION, 2, firmware_version);
-  if (rc != -1) {
-    if (firmware_version[0] >> 8 == 'F') {
+  if (rc != -1)
+  {
+    if (firmware_version[0] >> 8 == 'F')
+    {
       return 1;
     }
   }
@@ -275,12 +295,14 @@ static INT_8 rq_com_tentative_connexion() {
  * \param speed, baudrate
  * \return 0 in case of a success, -1 otherwise
  */
-#ifdef __unix__ // For Unix
-static INT_8 set_com_attribs(INT_32 fd, speed_t speed) {
+#ifdef __unix__  // For Unix
+static INT_8 set_com_attribs(INT_32 fd, speed_t speed)
+{
   struct termios tty;
   memset(&tty, 0, sizeof(struct termios));
 
-  if (tcgetattr(fd, &tty) != 0) {
+  if (tcgetattr(fd, &tty) != 0)
+  {
     return -1;
   }
 
@@ -296,10 +318,11 @@ static INT_8 set_com_attribs(INT_32 fd, speed_t speed) {
   tty.c_iflag &= ~ICRNL;
   tty.c_iflag &= ~INPCK;
   tty.c_iflag &= ~(IXON | IXOFF | IXANY);
-  tty.c_cc[VMIN] = 0; // read doesn't block
+  tty.c_cc[VMIN] = 0;  // read doesn't block
   tty.c_cc[VTIME] = 1;
 
-  if (tcsetattr(fd, TCSANOW, &tty) != 0) {
+  if (tcsetattr(fd, TCSANOW, &tty) != 0)
+  {
     printf("error %d from tcsetattr", errno);
     return -1;
   }
@@ -312,7 +335,8 @@ static INT_8 set_com_attribs(INT_32 fd, speed_t speed) {
  * \fn void rq_com_listen_stream()
  * \brief Listens and decode a valid stream input
  */
-void rq_com_listen_stream(void) {
+void rq_com_listen_stream(void)
+{
   static INT_32 last_byte = 0;
   static INT_32 new_message = 0;
   INT_32 i = 0;
@@ -320,10 +344,12 @@ void rq_com_listen_stream(void) {
 
   // Capture and store the current value of the sensor and use it to
   // zero subsequent sensor values
-  if (rq_com_zero_force_flag == 1) {
+  if (rq_com_zero_force_flag == 1)
+  {
     rq_com_zero_force_flag = 0;
 
-    for (i = 0; i < 6; i++) {
+    for (i = 0; i < 6; i++)
+    {
       rq_com_received_data_offset[i] = rq_com_received_data[i];
     }
   }
@@ -331,12 +357,14 @@ void rq_com_listen_stream(void) {
   usleep(4000);
 
   // Increment communication state counters
-  if (rq_com_timer_for_stream_detection++ > RQ_COM_TIMER_FOR_STREAM_DETECTION_MAX_VALUE) {
+  if (rq_com_timer_for_stream_detection++ > RQ_COM_TIMER_FOR_STREAM_DETECTION_MAX_VALUE)
+  {
     rq_com_timer_for_stream_detection = RQ_COM_TIMER_FOR_STREAM_DETECTION_MAX_VALUE;
     rq_com_stream_detected = false;
   }
 
-  if (rq_com_timer_for_valid_stream++ > RQ_COM_TIMER_FOR_VALID_STREAM_MAX_VALUE) {
+  if (rq_com_timer_for_valid_stream++ > RQ_COM_TIMER_FOR_VALID_STREAM_MAX_VALUE)
+  {
     rq_com_timer_for_valid_stream = RQ_COM_TIMER_FOR_VALID_STREAM_MAX_VALUE;
     rq_com_valid_stream = false;
   }
@@ -348,16 +376,19 @@ void rq_com_listen_stream(void) {
   rq_com_rcv_len = rq_com_read_port(rq_com_rcv_buff, MP_BUFF_SIZE);
 
   // If at least a byte is received, we consider the sensor to stream
-  if (rq_com_rcv_len > 0) {
+  if (rq_com_rcv_len > 0)
+  {
     rq_com_stream_detected = true;
     rq_com_timer_for_stream_detection = 0;
   }
 
   // Copying the data at the end of buffer 2
-  for (i = 0; i < rq_com_rcv_len; i++) {
+  for (i = 0; i < rq_com_rcv_len; i++)
+  {
     // If the buffer overflows, set the index to the beginning
-    if (rq_com_rcv_len2 == MP_BUFF_SIZE) {
-      // Next bytes will overwrite the begining of the buffer
+    if (rq_com_rcv_len2 == MP_BUFF_SIZE)
+    {
+      // Next bytes will overwrite the beginning of the buffer
       rq_com_rcv_len2 = 0;
       break;
     }
@@ -370,12 +401,14 @@ void rq_com_listen_stream(void) {
   memset(rq_com_snd_buff, 0, sizeof(rq_com_snd_buff));
 
   // If there is enough characters,...
-  if (rq_com_rcv_len2 >= 16 && rq_com_rcv_len >= 1) {
+  if (rq_com_rcv_len2 >= 16 && rq_com_rcv_len >= 1)
+  {
     // Search for a valid stream message in the buffer
-    for (i = rq_com_rcv_len2 - 16; i >= 0; i--) {
+    for (i = rq_com_rcv_len2 - 16; i >= 0; i--)
+    {
       // Header
-      if (rq_com_rcv_buff2[i] == 0x20 && rq_com_rcv_buff2[i + 1] == 0x4E && new_message == 0) {
-
+      if (rq_com_rcv_buff2[i] == 0x20 && rq_com_rcv_buff2[i + 1] == 0x4E && new_message == 0)
+      {
         last_byte = i - 1;
 
         rq_com_computed_crc = rq_com_compute_crc(rq_com_rcv_buff2 + i * sizeof(*rq_com_rcv_buff2), 14);
@@ -385,18 +418,23 @@ void rq_com_listen_stream(void) {
         rq_com_msg_received++;
 
         // The crc is valid.. the message can be used
-        if (rq_com_computed_crc == rq_com_crc) {
-          last_byte = i + 15; // will erase the message
+        if (rq_com_computed_crc == rq_com_crc)
+        {
+          last_byte = i + 15;  // will erase the message
 
           // convert the efforts to floating point numbers
-          for (j = 0; j < 3; j++) {
-            rq_com_received_data[j] =
-                ((float)((INT_16)((UINT_8)rq_com_rcv_buff2[i + 2 + 2 * j] + ((INT_16)(UINT_8)rq_com_rcv_buff2[i + 3 + 2 * j]) * 256))) / 100;
+          for (j = 0; j < 3; j++)
+          {
+            rq_com_received_data[j] = ((float)((INT_16)((UINT_8)rq_com_rcv_buff2[i + 2 + 2 * j] +
+                                                        ((INT_16)(UINT_8)rq_com_rcv_buff2[i + 3 + 2 * j]) * 256))) /
+                                      100;
           }
 
-          for (j = 3; j < 6; j++) {
-            rq_com_received_data[j] =
-                ((float)((INT_16)((UINT_8)rq_com_rcv_buff2[i + 2 + 2 * j] + ((INT_16)(UINT_8)rq_com_rcv_buff2[i + 3 + 2 * j]) * 256))) / 1000;
+          for (j = 3; j < 6; j++)
+          {
+            rq_com_received_data[j] = ((float)((INT_16)((UINT_8)rq_com_rcv_buff2[i + 2 + 2 * j] +
+                                                        ((INT_16)(UINT_8)rq_com_rcv_buff2[i + 3 + 2 * j]) * 256))) /
+                                      1000;
           }
 
           // Signal the stream as valid
@@ -406,17 +444,20 @@ void rq_com_listen_stream(void) {
 
           new_message = 1;
           rq_state_sensor_watchdog = 1;
-
-        } else {
+        }
+        else
+        {
           last_byte = i + 15;
           new_message = 1;
         }
       }
     }
 
-    if (last_byte > 0) {
-      // Shifts the buffer 2 to keep only what's after the last caracter of the last complete message.
-      for (i = 0; i < (rq_com_rcv_len2 - last_byte - 1); i++) {
+    if (last_byte > 0)
+    {
+      // Shifts the buffer 2 to keep only what's after the last character of the last complete message.
+      for (i = 0; i < (rq_com_rcv_len2 - last_byte - 1); i++)
+      {
         rq_com_rcv_buff2[i] = rq_com_rcv_buff2[last_byte + 1 + i];
       }
       rq_com_rcv_len2 = rq_com_rcv_len2 - last_byte - 1;
@@ -428,7 +469,8 @@ void rq_com_listen_stream(void) {
  * \fn static void rq_com_send_jam_signal(void)
  * \brief Send a signal that interrupts the streaming
  */
-static void rq_com_send_jam_signal(void) {
+static void rq_com_send_jam_signal(void)
+{
   // Build the jam signal
   memset(rq_com_snd_buff, RQ_COM_JAM_SIGNAL_CHAR, RQ_COM_JAM_SIGNAL_LENGTH);
 
@@ -441,20 +483,28 @@ static void rq_com_send_jam_signal(void) {
  * \brief Send a jam signal to stop the sensor stream
  *        and retry until the stream stops
  */
-static void rq_com_stop_stream_after_boot(void) {
+static void rq_com_stop_stream_after_boot(void)
+{
   static INT_32 counter = 0;
 
-  while (rq_com_stream_detected) {
+  while (rq_com_stream_detected)
+  {
     counter++;
 
-    if (counter == 1) {
+    if (counter == 1)
+    {
       rq_com_send_jam_signal();
-    } else {
+    }
+    else
+    {
       rq_com_listen_stream();
 
-      if (rq_com_stream_detected) {
+      if (rq_com_stream_detected)
+      {
         counter = 0;
-      } else {
+      }
+      else
+      {
         counter = 0;
       }
     }
@@ -466,16 +516,20 @@ static void rq_com_stop_stream_after_boot(void) {
  * \brief Starts the sensor streaming mode
  * \return 0 if the stream started, -1 otherwise
  */
-INT_8 rq_com_start_stream(void) {
-  UINT_16 data[1] = {0x0200}; // 0x0200 selects the stream output
+INT_8 rq_com_start_stream(void)
+{
+  UINT_16 data[1] = { 0x0200 };  // 0x0200 selects the stream output
   UINT_8 retries = 0;
   INT_8 rc = rq_com_send_fc_16(REGISTER_SELECT_OUTPUT, 2, data);
 
-  if (rc == -1) {
-    while (retries < 5) {
+  if (rc == -1)
+  {
+    while (retries < 5)
+    {
       rq_com_listen_stream();
 
-      if (rq_com_stream_detected) {
+      if (rq_com_stream_detected)
+      {
         return 0;
       }
 
@@ -494,7 +548,8 @@ INT_8 rq_com_start_stream(void) {
  * \param n Number of bytes to read
  * \param data table into which data will be written
  */
-static INT_8 rq_com_send_fc_03(UINT_16 base, UINT_16 n, UINT_16 *const data) {
+static INT_8 rq_com_send_fc_03(UINT_16 base, UINT_16 n, UINT_16* const data)
+{
   UINT_8 bytes_read = 0;
   INT_32 i = 0;
   INT_32 cpt = 0;
@@ -502,7 +557,8 @@ static INT_8 rq_com_send_fc_03(UINT_16 base, UINT_16 n, UINT_16 *const data) {
   UINT_16 retries = 0;
 
   // precondition, null pointer
-  if (data == NULL) {
+  if (data == NULL)
+  {
     return -1;
   }
 
@@ -510,17 +566,20 @@ static INT_8 rq_com_send_fc_03(UINT_16 base, UINT_16 n, UINT_16 *const data) {
   rq_com_send_fc_03_request(base, n);
 
   // Read registers
-  while (retries < 100 && bytes_read == 0) {
+  while (retries < 100 && bytes_read == 0)
+  {
     usleep(4000);
     bytes_read = rq_com_wait_for_fc_03_echo(data_request);
     retries++;
   }
 
-  if (bytes_read <= 0) {
+  if (bytes_read <= 0)
+  {
     return -1;
   }
 
-  for (i = 0; i < n / 2; i++) {
+  for (i = 0; i < n / 2; i++)
+  {
     data[i] = (data_request[cpt++] * 256);
     data[i] = data[i] + data_request[cpt++];
   }
@@ -535,34 +594,42 @@ static INT_8 rq_com_send_fc_03(UINT_16 base, UINT_16 n, UINT_16 *const data) {
  * \param n Number of registers to write
  * \param data buffer that contains data to write
  */
-static INT_8 rq_com_send_fc_16(INT_32 base, INT_32 n, UINT_16 const *const data) {
+static INT_8 rq_com_send_fc_16(INT_32 base, INT_32 n, UINT_16 const* const data)
+{
   INT_8 valid_answer = 0;
   UINT_8 data_request[n];
   UINT_16 retries = 0;
   UINT_32 i;
 
   // precondition, null pointer
-  if (data == NULL) {
+  if (data == NULL)
+  {
     return -1;
   }
 
-  for (i = 0; i < n; i++) {
-    if (i % 2 == 0) {
+  for (i = 0; i < n; i++)
+  {
+    if (i % 2 == 0)
+    {
       data_request[i] = (data[(i / 2)] >> 8);
-    } else {
+    }
+    else
+    {
       data_request[i] = (data[(i / 2)] & 0xFF);
     }
   }
 
   rq_com_send_fc_16_request(base, n, data_request);
 
-  while (retries < 100 && valid_answer == 0) {
+  while (retries < 100 && valid_answer == 0)
+  {
     usleep(10000);
     valid_answer = rq_com_wait_for_fc_16_echo();
     retries++;
   }
 
-  if (valid_answer == 1) {
+  if (valid_answer == 1)
+  {
     return 0;
   }
 
@@ -578,48 +645,58 @@ static INT_8 rq_com_send_fc_16(INT_32 base, INT_32 n, UINT_16 const *const data)
  *        the sensor. These include the firmware version,
  *        the serial number and the production year.
  */
-void rq_sensor_com_read_info_high_lvl(void) {
-  UINT_16 registers[4] = {0}; // register table
+void rq_sensor_com_read_info_high_lvl(void)
+{
+  UINT_16 registers[4] = { 0 };  // register table
   UINT_64 serial_number = 0;
   INT_32 result = 0;
 
   // Firmware Version
   result = rq_com_send_fc_03(REGISTER_FIRMWARE_VERSION, 6, registers);
-  if (result != -1) {
-    sprintf(rq_com_str_sensor_firmware_version, "%c%c%c-%hhu.%hhu.%hhu", registers[0] >> 8, registers[0] & 0xFF, registers[1] >> 8, registers[1] & 0xFF,
-            registers[2] >> 8, registers[2] & 0xFF);
+  if (result != -1)
+  {
+    sprintf(rq_com_str_sensor_firmware_version, "%c%c%c-%hhu.%hhu.%hhu", registers[0] >> 8, registers[0] & 0xFF,
+            registers[1] >> 8, registers[1] & 0xFF, registers[2] >> 8, registers[2] & 0xFF);
   }
 
   // Production Year
   result = rq_com_send_fc_03(REGISTER_PRODUCTION_YEAR, 2, registers);
-  if (result != -1) {
+  if (result != -1)
+  {
     sprintf(rq_com_str_sensor_production_year, "%u", registers[0]);
   }
 
   // Serial Number
   result = rq_com_send_fc_03(REGISTER_SERIAL_NUMBER, 8, registers);
-  if (result != -1) {
-    serial_number = (UINT_64)((registers[3] >> 8) * 256 * 256 * 256 + (registers[3] & 0xFF) * 256 * 256 + (registers[2] >> 8) * 256 + (registers[2] & 0xFF));
+  if (result != -1)
+  {
+    serial_number = (UINT_64)((registers[3] >> 8) * 256 * 256 * 256 + (registers[3] & 0xFF) * 256 * 256 +
+                              (registers[2] >> 8) * 256 + (registers[2] & 0xFF));
 
-    if (serial_number == 0) {
+    if (serial_number == 0)
+    {
       sprintf(rq_com_str_sensor_serial_number, "UNKNOWN");
-    } else {
-      sprintf(rq_com_str_sensor_serial_number, "%c%c%c-%.4lu", registers[0] >> 8, registers[0] & 0xFF, registers[1] >> 8, serial_number);
+    }
+    else
+    {
+      sprintf(rq_com_str_sensor_serial_number, "%c%c%c-%.4lu", registers[0] >> 8, registers[0] & 0xFF,
+              registers[1] >> 8, serial_number);
     }
   }
 }
 
 /**
  * \fn static INT_32 rq_com_read_port(UINT_8 * buf, UINT_32 buf_len)
- * \brief Reads incomming data on the com port
- * \param buf, contains the incomming data
+ * \brief Reads incoming data on the com port
+ * \param buf, contains the incoming data
  * \param buf_len maximum number of data to read
  * \return The number of character read
  */
-static INT_32 rq_com_read_port(UINT_8 *const buf, UINT_32 buf_len) {
-#ifdef __unix__ // For Unix
+static INT_32 rq_com_read_port(UINT_8* const buf, UINT_32 buf_len)
+{
+#ifdef __unix__  // For Unix
   return read(fd_connexion, buf, buf_len);
-#elif defined(_WIN32) || defined(WIN32) // For Windows
+#elif defined(_WIN32) || defined(WIN32)  // For Windows
   DWORD myBytesRead = 0;
   ReadFile(hSerial, buf, buf_len, &myBytesRead, NULL);
   return myBytesRead;
@@ -630,18 +707,20 @@ static INT_32 rq_com_read_port(UINT_8 *const buf, UINT_32 buf_len) {
  * \fn static INT_32 rq_com_write_port(UINT_8 * buf, UINT_32 buf_len)
  * \brief Writes on the com port
  * \param buf data to write
- * \param buf_len numer of bytes to write
+ * \param buf_len number of bytes to write
  * \return The number of characters written or -1 in case of an error
  */
-static INT_32 rq_com_write_port(UINT_8 const *const buf, UINT_32 buf_len) {
+static INT_32 rq_com_write_port(UINT_8 const* const buf, UINT_32 buf_len)
+{
   // precondition
-  if (buf == NULL) {
+  if (buf == NULL)
+  {
     return -1;
   }
 
-#ifdef __unix__ // For Unix
+#ifdef __unix__  // For Unix
   return write(fd_connexion, buf, buf_len);
-#elif defined(_WIN32) || defined(WIN32) // For Windows
+#elif defined(_WIN32) || defined(WIN32)  // For Windows
   DWORD n_bytes = 0;
   return (WriteFile(hSerial, buf, buf_len, &n_bytes, NULL)) ? n_bytes : -1;
 #endif
@@ -653,36 +732,45 @@ static INT_32 rq_com_write_port(UINT_8 const *const buf, UINT_32 buf_len) {
  * \param length Length of the buffer on which the crc is computed
  * \return Value of the crc
  */
-static UINT_16 rq_com_compute_crc(UINT_8 const *adr, INT_32 length) {
+static UINT_16 rq_com_compute_crc(UINT_8 const* adr, INT_32 length)
+{
   UINT_16 CRC_calc = 0xFFFF;
   INT_32 j = 0;
   INT_32 k = 0;
 
   // precondition, null pointer
-  if (adr == NULL) {
+  if (adr == NULL)
+  {
     return 0;
   }
 
   // While there are bytes left in the message
-  while (j < length) {
+  while (j < length)
+  {
     // If it's the first byte
-    if (j == 0) {
+    if (j == 0)
+    {
       CRC_calc ^= *adr & 0xFF;
     }
     // Else we'll use an XOR on the word
-    else {
+    else
+    {
       CRC_calc ^= *adr;
     }
 
     k = 0;
 
     // While the byte is not completed
-    while (k < 8) {
+    while (k < 8)
+    {
       // If the last bit is a 1
-      if (CRC_calc & 0x0001) {
-        CRC_calc = (CRC_calc >> 1) ^ 0xA001; // Shifts 1 bit to the right and XOR with the polynomial factor
-      } else {
-        CRC_calc >>= 1; // Shifts 1 bit to the right
+      if (CRC_calc & 0x0001)
+      {
+        CRC_calc = (CRC_calc >> 1) ^ 0xA001;  // Shifts 1 bit to the right and XOR with the polynomial factor
+      }
+      else
+      {
+        CRC_calc >>= 1;  // Shifts 1 bit to the right
       }
 
       k++;
@@ -702,7 +790,8 @@ static UINT_16 rq_com_compute_crc(UINT_8 const *adr, INT_32 length) {
  * \param base Address of the first register to read
  * \param n Number of bytes to read
  */
-static void rq_com_send_fc_03_request(UINT_16 base, UINT_16 n) {
+static void rq_com_send_fc_03_request(UINT_16 base, UINT_16 n)
+{
   static UINT_8 buf[MP_BUFF_SIZE];
   INT_32 length = 0;
   UINT_8 reg[2];
@@ -710,18 +799,19 @@ static void rq_com_send_fc_03_request(UINT_16 base, UINT_16 n) {
   UINT_16 CRC;
 
   // Manage if the number of bytes to write is odd or even
-  if (n % 2 != 0) {
+  if (n % 2 != 0)
+  {
     n += 1;
   }
 
-  // Split the address and the number of bytes between MSB ans LSB
-  reg[0] = (UINT_8)(base >> 8);          // MSB to the left
-  reg[1] = (UINT_8)(base & 0x00FF);      // LSB to the right
-  words[0] = (UINT_8)((n / 2) >> 8);     // MSB to the left
-  words[1] = (UINT_8)((n / 2) & 0x00FF); // LSB to the right
+  // Split the address and the number of bytes between MSB and LSB
+  reg[0] = (UINT_8)(base >> 8);           // MSB to the left
+  reg[1] = (UINT_8)(base & 0x00FF);       // LSB to the right
+  words[0] = (UINT_8)((n / 2) >> 8);      // MSB to the left
+  words[1] = (UINT_8)((n / 2) & 0x00FF);  // LSB to the right
 
   // Build the request
-  buf[length++] = 9; // slave address
+  buf[length++] = 9;  // slave address
   buf[length++] = 3;
   buf[length++] = reg[0];
   buf[length++] = reg[1];
@@ -745,7 +835,8 @@ static void rq_com_send_fc_03_request(UINT_16 base, UINT_16 n) {
  * \param base Address of the buffer that will store the reply
  * \return The number of character read
  */
-static INT_32 rq_com_wait_for_fc_03_echo(UINT_8 *const data) {
+static INT_32 rq_com_wait_for_fc_03_echo(UINT_8* const data)
+{
   static UINT_8 buf[MP_BUFF_SIZE];
   static INT_32 length = 0;
   static INT_32 old_length = 0;
@@ -755,35 +846,48 @@ static INT_32 rq_com_wait_for_fc_03_echo(UINT_8 *const data) {
   INT_32 j = 0;
   INT_32 ret = rq_com_read_port(&buf[length], MP_BUFF_SIZE - length);
 
-  if (ret != -1) {
+  if (ret != -1)
+  {
     length = length + ret;
   }
 
   // If there is no new data, the buffer is cleared
-  if (length == old_length) {
-    if (counter_no_new_data < 5) {
+  if (length == old_length)
+  {
+    if (counter_no_new_data < 5)
+    {
       counter_no_new_data++;
-    } else {
+    }
+    else
+    {
       length = 0;
     }
-  } else {
+  }
+  else
+  {
     counter_no_new_data = 0;
   }
 
   old_length = length;
 
-  if (length > 0) {
+  if (length > 0)
+  {
     // If there is not enough data, return
-    if (length <= 5) {
+    if (length <= 5)
+    {
       return 0;
-    } else {
-      if (buf[1] == 3) // 3 indicates the response to a fc03 query
+    }
+    else
+    {
+      if (buf[1] == 3)  // 3 indicates the response to a fc03 query
       {
         n = buf[2];
-        if (length < 5 + n) {
+        if (length < 5 + n)
+        {
           return 0;
         }
-      } else // unknown fc code
+      }
+      else  // unknown fc code
       {
         length = 0;
         return 0;
@@ -792,16 +896,20 @@ static INT_32 rq_com_wait_for_fc_03_echo(UINT_8 *const data) {
     CRC = rq_com_compute_crc(buf, length - 2);
 
     // Verifies the crc and the slave ID
-    if (CRC != (UINT_16)((buf[length - 1] * 256) + (buf[length - 2]))) {
+    if (CRC != (UINT_16)((buf[length - 1] * 256) + (buf[length - 2])))
+    {
       // Clears the buffer
       buf[0] = 0;
       length = 0;
       return 0;
-    } else {
+    }
+    else
+    {
       n = buf[2];
 
       // Writes the bytes to the return buffer
-      for (j = 0; j < n; j++) {
+      for (j = 0; j < n; j++)
+      {
         data[j] = buf[j + 3];
       }
 
@@ -821,7 +929,8 @@ static INT_32 rq_com_wait_for_fc_03_echo(UINT_8 *const data) {
  * \param base Address of the first register to write to
  * \param n Number of bytes to write
  */
-static void rq_com_send_fc_16_request(INT_32 base, INT_32 n, UINT_8 const *const data) {
+static void rq_com_send_fc_16_request(INT_32 base, INT_32 n, UINT_8 const* const data)
+{
   static UINT_8 buf[MP_BUFF_SIZE];
   INT_32 length = 0;
 
@@ -832,25 +941,29 @@ static void rq_com_send_fc_16_request(INT_32 base, INT_32 n, UINT_8 const *const
   INT_32 n2 = 0;
   INT_32 i = 0;
 
-  if (data == NULL) {
+  if (data == NULL)
+  {
     return;
   }
 
   // Manage if the number of bytes to write is odd or even
-  if (n % 2 != 0) {
+  if (n % 2 != 0)
+  {
     n2 = n + 1;
-  } else {
+  }
+  else
+  {
     n2 = n;
   }
 
-  // Split the address and the number of bytes between MSB ans LSB
-  reg[0] = (UINT_8)(base >> 8);           // MSB to the left
-  reg[1] = (UINT_8)(base & 0x00FF);       // LSB to the right
-  words[0] = (UINT_8)((n2 / 2) >> 8);     // MSB to the left
-  words[1] = (UINT_8)((n2 / 2) & 0x00FF); // LSB to the right
+  // Split the address and the number of bytes between MSB and LSB
+  reg[0] = (UINT_8)(base >> 8);            // MSB to the left
+  reg[1] = (UINT_8)(base & 0x00FF);        // LSB to the right
+  words[0] = (UINT_8)((n2 / 2) >> 8);      // MSB to the left
+  words[1] = (UINT_8)((n2 / 2) & 0x00FF);  // LSB to the right
 
   // Build the query
-  buf[length++] = 9; // slave address
+  buf[length++] = 9;  // slave address
   buf[length++] = 16;
   buf[length++] = reg[0];
   buf[length++] = reg[1];
@@ -859,11 +972,13 @@ static void rq_com_send_fc_16_request(INT_32 base, INT_32 n, UINT_8 const *const
   buf[length++] = n2;
 
   // Copy data to the send buffer
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; i++)
+  {
     buf[length++] = data[i];
   }
 
-  if (n != n2) {
+  if (n != n2)
+  {
     buf[length++] = 0;
   }
 
@@ -882,7 +997,8 @@ static void rq_com_send_fc_16_request(INT_32 base, INT_32 n, UINT_8 const *const
  * \brief Reads the response to a fc16 write query
  * \return 0 for an invalid response, 1 otherwise
  */
-static INT_32 rq_com_wait_for_fc_16_echo(void) {
+static INT_32 rq_com_wait_for_fc_16_echo(void)
+{
   static UINT_8 buf[MP_BUFF_SIZE];
   static INT_32 length = 0;
   static INT_32 old_length = 0;
@@ -892,43 +1008,57 @@ static INT_32 rq_com_wait_for_fc_16_echo(void) {
   length = length + rq_com_read_port(&buf[length], MP_BUFF_SIZE - length);
 
   // Clear the buffer if no new data
-  if (length == old_length) {
-    if (counter_no_new_data < 5) {
+  if (length == old_length)
+  {
+    if (counter_no_new_data < 5)
+    {
       counter_no_new_data++;
-    } else {
+    }
+    else
+    {
       length = 0;
     }
-  } else {
+  }
+  else
+  {
     counter_no_new_data = 0;
   }
 
   old_length = length;
 
-  if (length > 0) {
+  if (length > 0)
+  {
     // If not enough data, return
-    if (length < 8) {
+    if (length < 8)
+    {
       return 0;
-    } else {
+    }
+    else
+    {
       // if it's a reply to a fc16 query then proceed
-      if (buf[1] == 16) {
+      if (buf[1] == 16)
+      {
         length = 8;
 
         CRC = rq_com_compute_crc(buf, length - 2);
 
         // Check the crc an the slave ID
-        if (CRC != (UINT_16)((buf[length - 1] * 256) + (buf[length - 2]))) {
+        if (CRC != (UINT_16)((buf[length - 1] * 256) + (buf[length - 2])))
+        {
           // Clear the buffer
           length = 0;
 
           return 0;
-        } else {
+        }
+        else
+        {
           // Clear the buffer
           length = 0;
 
           return 1;
         }
-
-      } else // Clear the buffer
+      }
+      else  // Clear the buffer
       {
         length = 0;
         return 0;
@@ -943,7 +1073,8 @@ static INT_32 rq_com_wait_for_fc_16_echo(void) {
  * \brief Retrieves the sensor serial number
  * \param serial_number address of the return buffer
  */
-void rq_com_get_str_serial_number(INT_8 *serial_number) {
+void rq_com_get_str_serial_number(INT_8* serial_number)
+{
   strcpy(serial_number, rq_com_str_sensor_serial_number);
 }
 
@@ -951,7 +1082,8 @@ void rq_com_get_str_serial_number(INT_8 *serial_number) {
  * \brief Retrieves the sensor firmware version
  * \param firmware_version Address of the return buffer
  */
-void rq_com_get_str_firmware_version(INT_8 *firmware_version) {
+void rq_com_get_str_firmware_version(INT_8* firmware_version)
+{
   strcpy(firmware_version, rq_com_str_sensor_firmware_version);
 }
 
@@ -959,7 +1091,8 @@ void rq_com_get_str_firmware_version(INT_8 *firmware_version) {
  * \brief Retrieves the sensor firmware version
  * \param production_year Address of the return buffer
  */
-void rq_com_get_str_production_year(INT_8 *production_year) {
+void rq_com_get_str_production_year(INT_8* production_year)
+{
   strcpy(production_year, rq_com_str_sensor_production_year);
 }
 
@@ -967,14 +1100,16 @@ void rq_com_get_str_production_year(INT_8 *production_year) {
  * \brief retrieves the sensor firmware version
  * \param production_year Address of the return buffer
  */
-bool rq_com_get_stream_detected() {
+bool rq_com_get_stream_detected()
+{
   return rq_com_stream_detected;
 }
 
 /**
  * \brief returns if the stream message is valid
  */
-bool rq_com_get_valid_stream() {
+bool rq_com_get_valid_stream()
+{
   return rq_com_valid_stream;
 }
 
@@ -983,8 +1118,10 @@ bool rq_com_get_valid_stream() {
  * \param i Index of the component. 0 to 2 for Fx, Fy and Fz.
  *          3 to 5 for Mx, My and Mz.
  */
-float rq_com_get_received_data(UINT_8 i) {
-  if (i >= 0 && i <= 5) {
+float rq_com_get_received_data(UINT_8 i)
+{
+  if (i >= 0 && i <= 5)
+  {
     return rq_com_received_data[i] - rq_com_received_data_offset[i];
   }
 
@@ -998,7 +1135,8 @@ float rq_com_get_received_data(UINT_8 i) {
       new message is available is set to false even if the message
       hasn't beed read.
  */
-bool rq_com_got_new_message() {
+bool rq_com_got_new_message()
+{
   bool tmp = rq_com_new_message;
   rq_com_new_message = false;
   return tmp;
@@ -1007,9 +1145,10 @@ bool rq_com_got_new_message() {
 /**
  * \brief Set the "zero sensor" flag to 1. When the next stream message will
       be decoded, the effort values will be stored as offsets a
-      substracted from the next values
+      subtracted from the next values
  */
-void rq_com_do_zero_force_flag() {
+void rq_com_do_zero_force_flag()
+{
   rq_com_zero_force_flag = 1;
 }
 
@@ -1017,8 +1156,9 @@ void rq_com_do_zero_force_flag() {
  * \brief close the serial port.
  * \warning Only valid under Windows.
  */
-void stop_connection() {
-#if defined(_WIN32) || defined(WIN32) // For Windows
+void stop_connection()
+{
+#if defined(_WIN32) || defined(WIN32)  // For Windows
   CloseHandle(hSerial);
   hSerial = INVALID_HANDLE_VALUE;
 #endif
@@ -1029,9 +1169,10 @@ void stop_connection() {
  * \brief try to discover a com port by polling each serial port
  * \return 1 if a device is found, 0 otherwise
  */
-static UINT_8 rq_com_identify_device(INT_8 const *const d_name) {
-  INT_8 dirParent[20] = {0};
-  INT_8 port_com[15] = {0};
+static UINT_8 rq_com_identify_device(INT_8 const* const d_name)
+{
+  INT_8 dirParent[20] = { 0 };
+  INT_8 port_com[15] = { 0 };
 
   strcpy(dirParent, "/dev/");
   strcat(dirParent, d_name);
@@ -1039,10 +1180,13 @@ static UINT_8 rq_com_identify_device(INT_8 const *const d_name) {
   fd_connexion = open(port_com, O_RDWR | O_NOCTTY | O_NDELAY | O_EXCL);
 
   // The serial port is open
-  if (fd_connexion != -1) {
-    if (set_com_attribs(fd_connexion, B19200) != -1) {
+  if (fd_connexion != -1)
+  {
+    if (set_com_attribs(fd_connexion, B19200) != -1)
+    {
       // Try connecting to the sensor
-      if (rq_com_tentative_connexion() == 1) {
+      if (rq_com_tentative_connexion() == 1)
+      {
         return 1;
       }
     }

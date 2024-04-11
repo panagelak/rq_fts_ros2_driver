@@ -35,15 +35,21 @@
 
 #include "robotiq_ft_sensor_hardware/robotiq_ft_sensor_hardware.hpp"
 
-namespace robotiq_ft_sensor_hardware {
-hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_init(const hardware_interface::HardwareInfo &info) {
-  if (hardware_interface::SensorInterface::on_init(info) != hardware_interface::CallbackReturn::SUCCESS) {
+namespace robotiq_ft_sensor_hardware
+{
+hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_init(const hardware_interface::HardwareInfo& info)
+{
+  if (hardware_interface::SensorInterface::on_init(info) != hardware_interface::CallbackReturn::SUCCESS)
+  {
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  use_fake_mode_ = info_.hardware_parameters["use_fake_mode"] == "True" || info_.hardware_parameters["use_fake_mode"] == "true";
-  use_add_fts_wrench_ = info_.hardware_parameters["use_add_fts_wrench"] == "True" || info_.hardware_parameters["use_add_fts_wrench"] == "true";
-  if (use_add_fts_wrench_) {
+  use_fake_mode_ =
+      info_.hardware_parameters["use_fake_mode"] == "True" || info_.hardware_parameters["use_fake_mode"] == "true";
+  use_add_fts_wrench_ = info_.hardware_parameters["use_add_fts_wrench"] == "True" ||
+                        info_.hardware_parameters["use_add_fts_wrench"] == "true";
+  if (use_add_fts_wrench_)
+  {
     add_fts_wrench_topic_ = info_.hardware_parameters["add_fts_wrench_topic"];
   }
   hw_sensor_states_.resize(info_.sensors[0].state_interfaces.size(), std::numeric_limits<double>::quiet_NaN());
@@ -61,51 +67,66 @@ hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_init(const hardwa
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-std::vector<hardware_interface::StateInterface> RobotiqFTSensorHardware::export_state_interfaces() {
+std::vector<hardware_interface::StateInterface> RobotiqFTSensorHardware::export_state_interfaces()
+{
   std::vector<hardware_interface::StateInterface> state_interfaces;
   RCLCPP_INFO(logger_, "Exporting State Interfaces");
-  for (auto &sensor : info_.sensors) {
-    for (uint j = 0; j < sensor.state_interfaces.size(); ++j) {
+  for (auto& sensor : info_.sensors)
+  {
+    for (uint j = 0; j < sensor.state_interfaces.size(); ++j)
+    {
       RCLCPP_INFO(logger_, "Sensor %s state %s", sensor.name.c_str(), sensor.state_interfaces[j].name.c_str());
-      state_interfaces.emplace_back(hardware_interface::StateInterface(sensor.name, sensor.state_interfaces[j].name, &hw_sensor_states_[j]));
+      state_interfaces.emplace_back(
+          hardware_interface::StateInterface(sensor.name, sensor.state_interfaces[j].name, &hw_sensor_states_[j]));
     }
   }
   return state_interfaces;
 }
 
-hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_activate(const rclcpp_lifecycle::State & /*previous_state*/) {
+hardware_interface::CallbackReturn
+RobotiqFTSensorHardware::on_activate(const rclcpp_lifecycle::State& /*previous_state*/)
+{
   RCLCPP_INFO(logger_, "Activating ...please wait...");
-  if (!use_fake_mode_) {
+  if (!use_fake_mode_)
+  {
     // Connect
-    if (!ftdi_id_.empty()) {
+    if (!ftdi_id_.empty())
+    {
       RCLCPP_INFO(logger_, "Trying to connect to a sensor at /dev/%s", ftdi_id_.c_str());
-    } else {
+    }
+    else
+    {
       RCLCPP_INFO(logger_, "No device filename specified. Will attempt to discover Robotiq force torque sensor.");
     }
     // Connect
     // If we can't initialize, we return an error
     ret_ = sensor_state_machine();
-    if (ret_ == -1) {
+    if (ret_ == -1)
+    {
       wait_for_other_connection();
     }
     // Reads basic info on the sensor
     ret_ = sensor_state_machine();
-    if (ret_ == -1) {
+    if (ret_ == -1)
+    {
       wait_for_other_connection();
     }
     // Starts the stream
     ret_ = sensor_state_machine();
-    if (ret_ == -1) {
+    if (ret_ == -1)
+    {
       wait_for_other_connection();
     }
   }
   //=== ASYNC NODE
   rclcpp::NodeOptions options;
-  options.arguments({"--ros-args", "-r", "__node:=robotiq_ft_hardware_internal_" + info_.name});
+  options.arguments({ "--ros-args", "-r", "__node:=robotiq_ft_hardware_internal_" + info_.name });
   async_node_ = rclcpp::Node::make_shared("_", options);
   srv_sensor_accessor_ = async_node_->create_service<robotiq_ft_sensor_interfaces::srv::SensorAccessor>(
-      "robotiq_ft_sensor_acc", std::bind(&RobotiqFTSensorHardware::receiverCallback, this, std::placeholders::_1, std::placeholders::_2));
-  if (use_add_fts_wrench_) {
+      "robotiq_ft_sensor_acc",
+      std::bind(&RobotiqFTSensorHardware::receiverCallback, this, std::placeholders::_1, std::placeholders::_2));
+  if (use_add_fts_wrench_)
+  {
     sub_add_wrench_ = async_node_->create_subscription<geometry_msgs::msg::WrenchStamped>(
         add_fts_wrench_topic_, 10, std::bind(&RobotiqFTSensorHardware::wrenchAddCB, this, std::placeholders::_1));
   }
@@ -119,7 +140,9 @@ hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_activate(const rc
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) {
+hardware_interface::CallbackReturn
+RobotiqFTSensorHardware::on_deactivate(const rclcpp_lifecycle::State& /*previous_state*/)
+{
   RCLCPP_INFO(logger_, "Deactivating ...please wait...");
   //
   executor_.cancel();
@@ -129,31 +152,39 @@ hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_deactivate(const 
   sub_add_wrench_.reset();
   async_node_.reset();
   //
-  // TODO DEACTIVE RQ SENSOR
+  // TODO DEACTIVATE RQ SENSOR
   //
   RCLCPP_INFO(logger_, "Successfully deactivated!");
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-hardware_interface::return_type RobotiqFTSensorHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) {
-  if (use_fake_mode_) {
+hardware_interface::return_type RobotiqFTSensorHardware::read(const rclcpp::Time& /*time*/,
+                                                              const rclcpp::Duration& /*period*/)
+{
+  if (use_fake_mode_)
+  {
     hw_sensor_states_[0] = 0.0;
     hw_sensor_states_[1] = 0.0;
     hw_sensor_states_[2] = 0.0;
     hw_sensor_states_[3] = 0.0;
     hw_sensor_states_[4] = 0.0;
     hw_sensor_states_[5] = 0.0;
-  } else {
+  }
+  else
+  {
     ret_ = sensor_state_machine();
-    if (ret_ == -1) {
+    if (ret_ == -1)
+    {
       wait_for_other_connection();
     }
 
-    if (rq_sensor_get_current_state() == RQ_STATE_RUN) {
+    if (rq_sensor_get_current_state() == RQ_STATE_RUN)
+    {
       strcpy(bufStream_, "");
       // auto msgStream = get_data();
 
-      if (rq_state_got_new_message()) {
+      if (rq_state_got_new_message())
+      {
         hw_sensor_states_[0] = rq_state_get_received_data(0);
         hw_sensor_states_[1] = rq_state_get_received_data(1);
         hw_sensor_states_[2] = rq_state_get_received_data(2);
@@ -163,7 +194,8 @@ hardware_interface::return_type RobotiqFTSensorHardware::read(const rclcpp::Time
       }
     }
   }
-  if (use_add_fts_wrench_) {
+  if (use_add_fts_wrench_)
+  {
     hw_sensor_states_[0] += add_wrench_msg_.wrench.force.x;
     hw_sensor_states_[1] += add_wrench_msg_.wrench.force.y;
     hw_sensor_states_[2] += add_wrench_msg_.wrench.force.z;
@@ -174,7 +206,7 @@ hardware_interface::return_type RobotiqFTSensorHardware::read(const rclcpp::Time
   return hardware_interface::return_type::OK;
 }
 
-} // namespace robotiq_ft_sensor_hardware
+}  // namespace robotiq_ft_sensor_hardware
 
 #include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS(robotiq_ft_sensor_hardware::RobotiqFTSensorHardware, hardware_interface::SensorInterface)

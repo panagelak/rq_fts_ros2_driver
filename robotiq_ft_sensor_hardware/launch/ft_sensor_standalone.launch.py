@@ -9,13 +9,11 @@ def launch_setup(context, *args, **kwargs):
         package="robotiq_ft_sensor_hardware",
         executable="robotiq_ft_sensor_standalone_node",
         namespace=LaunchConfiguration("namespace"),
-        parameters=[{
-            "max_retries": LaunchConfiguration("max_retries")
-        }, {
-            "ftdi_id": LaunchConfiguration("ftdi_id")
-        }, {
-            "frame_id": LaunchConfiguration("frame_id")
-        }],
+        parameters=[
+            {"max_retries": LaunchConfiguration("max_retries")},
+            {"ftdi_id": LaunchConfiguration("ftdi_id")},
+            {"frame_id": LaunchConfiguration("frame_id")},
+        ],
     )
 
     nodes = [robotiq_ft_sensor]
@@ -29,5 +27,9 @@ def generate_launch_description():
     declared_arguments.append(DeclareLaunchArgument("namespace", default_value=""))
     declared_arguments.append(DeclareLaunchArgument("max_retries", default_value="100"))
     declared_arguments.append(DeclareLaunchArgument("ftdi_id", default_value=""))
-    declared_arguments.append(DeclareLaunchArgument("frame_id", default_value="robotiq_ft_frame_id"))
-    return LaunchDescription(declared_arguments + [OpaqueFunction(function=launch_setup)])
+    declared_arguments.append(
+        DeclareLaunchArgument("frame_id", default_value="robotiq_ft_frame_id")
+    )
+    return LaunchDescription(
+        declared_arguments + [OpaqueFunction(function=launch_setup)]
+    )
