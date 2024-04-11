@@ -78,6 +78,7 @@ private:
   realtime_tools::RealtimeBuffer<std::array<double, 6>> sensor_readings_;
   //=========== robotiq force torque
   rclcpp::Node::SharedPtr async_node_;
+  rclcpp::TimerBase::SharedPtr timer_;
   std::unique_ptr<std::thread> node_thread_;
   rclcpp::executors::SingleThreadedExecutor executor_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr srv_zero_fts_;

@@ -88,7 +88,11 @@ std::vector<hardware_interface::StateInterface> RobotiqFTSensorHardware::export_
 
 void RobotiqFTSensorHardware::read_background()
 {
-  std::array<double, 6> sensor_reading_background = { std::numeric_limits<double>::quiet_NaN() };
+  std::array<double, 6> sensor_reading_background = {
+    std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+    std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+    std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN()
+  };
   ret_ = sensor_state_machine();
   if (ret_ == -1)
   {
@@ -154,8 +158,8 @@ RobotiqFTSensorHardware::on_activate(const rclcpp_lifecycle::State& /*previous_s
       "/io_and_status_controller/zero_ftsensor",
       std::bind(&RobotiqFTSensorHardware::set_zero, this, std::placeholders::_1, std::placeholders::_2));
 
-  async_node_->create_wall_timer(std::chrono::milliseconds(read_rate_),
-                                 std::bind(&RobotiqFTSensorHardware::read_background, this));
+  timer_ = async_node_->create_wall_timer(std::chrono::milliseconds(read_rate_),
+                                          std::bind(&RobotiqFTSensorHardware::read_background, this));
 
   node_thread_ = std::make_unique<std::thread>([&]() {
     executor_.add_node(async_node_);
