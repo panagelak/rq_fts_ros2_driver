@@ -88,11 +88,6 @@ std::vector<hardware_interface::StateInterface> RobotiqFTSensorHardware::export_
 
 void RobotiqFTSensorHardware::read_background()
 {
-  std::array<double, 6> sensor_reading_background = {
-    std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
-    std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
-    std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN()
-  };
   ret_ = sensor_state_machine();
   if (ret_ == -1)
   {
@@ -106,17 +101,17 @@ void RobotiqFTSensorHardware::read_background()
 
     if (rq_state_got_new_message())
     {
+      std::array<double, 6> sensor_reading_background{};
       sensor_reading_background[0] = rq_state_get_received_data(0);
       sensor_reading_background[1] = rq_state_get_received_data(1);
       sensor_reading_background[2] = rq_state_get_received_data(2);
       sensor_reading_background[3] = rq_state_get_received_data(3);
       sensor_reading_background[4] = rq_state_get_received_data(4);
-      sensor_reading_background
+      sensor_reading_background[5] = rq_state_get_received_data(5);
 
-          [5] = rq_state_get_received_data(5);
+      sensor_readings_.writeFromNonRT(sensor_reading_background);
     }
   }
-  sensor_readings_.writeFromNonRT(sensor_reading_background);
 }
 
 hardware_interface::CallbackReturn
@@ -151,6 +146,12 @@ RobotiqFTSensorHardware::on_activate(const rclcpp_lifecycle::State& /*previous_s
   {
     wait_for_other_connection();
   }
+
+  for (auto& value : hw_sensor_states_)
+  {
+    value = std::numeric_limits<double>::quiet_NaN();
+  }
+  sensor_readings_.writeFromNonRT(hw_sensor_states_);
 
   //=== ASYNC NODE
   rclcpp::NodeOptions options;
