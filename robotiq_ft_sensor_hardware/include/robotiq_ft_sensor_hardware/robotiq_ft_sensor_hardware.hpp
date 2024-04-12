@@ -48,7 +48,6 @@
 #include "robotiq_ft_sensor_interfaces/srv/sensor_accessor.hpp"
 #include "rq_sensor_state.h"
 #include <geometry_msgs/msg/wrench_stamped.hpp>
-#include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
