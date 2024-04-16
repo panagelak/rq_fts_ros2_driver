@@ -52,35 +52,45 @@
 using namespace std::placeholders;
 using namespace std::chrono_literals;
 
-class RQSensor : public rclcpp::Node {
+class RQSensor : public rclcpp::Node
+{
 public:
   // Constructor
-  RQSensor(const rclcpp::NodeOptions &options) : Node("rq_sensor", options) {}
-  bool initialize() {
+  RQSensor(const rclcpp::NodeOptions& options) : Node("rq_sensor", options)
+  {
+  }
+  bool initialize()
+  {
     // parameters
     max_retries_ = get_parameter_or<int>("max_retries", 100);
     ftdi_id = get_parameter_or<std::string>("ftdi_id", "");
     wrenchMsg_.header.frame_id = get_parameter_or<std::string>("frame_id", "robotiq_ft_frame_id");
     // Connect to Sensor
-    if (!ftdi_id.empty()) {
+    if (!ftdi_id.empty())
+    {
       RCLCPP_INFO(get_logger(), "Trying to connect to a sensor at /dev/%s", ftdi_id.c_str());
-    } else {
+    }
+    else
+    {
       RCLCPP_INFO(get_logger(), "No device filename specified. Will attempt to discover Robotiq force torque sensor.");
     }
 
     // If we can't initialize, we return an error
     ret_ = sensor_state_machine();
-    if (ret_ == -1) {
+    if (ret_ == -1)
+    {
       wait_for_other_connection();
     }
     // Reads basic info on the sensor
     ret_ = sensor_state_machine();
-    if (ret_ == -1) {
+    if (ret_ == -1)
+    {
       wait_for_other_connection();
     }
     // Starts the stream
     ret_ = sensor_state_machine();
-    if (ret_ == -1) {
+    if (ret_ == -1)
+    {
       wait_for_other_connection();
     }
     // zero the sensor
@@ -88,27 +98,32 @@ public:
 
     //
     srv_sensor_accessor_ = this->create_service<robotiq_ft_sensor_interfaces::srv::SensorAccessor>(
-        "robotiq_ft_sensor_acc", std::bind(&RQSensor::receiverCallback, this, std::placeholders::_1, std::placeholders::_2));
+        "robotiq_ft_sensor_acc",
+        std::bind(&RQSensor::receiverCallback, this, std::placeholders::_1, std::placeholders::_2));
     // pub_sensor_ = this->create_publisher<robotiq_ft_sensor_interfaces::msg::FTSensor>("robotiq_ft_sensor", 512);
-    pub_wrench_ = this->create_publisher<geometry_msgs::msg::WrenchStamped>("robotiq_force_torque_sensor_broadcaster/wrench", 512);
+    pub_wrench_ = this->create_publisher<geometry_msgs::msg::WrenchStamped>("robotiq_force_torque_sensor_broadcaster/"
+                                                                            "wrench",
+                                                                            512);
     timer_ = this->create_wall_timer(8ms, std::bind(&RQSensor::update, this));
     RCLCPP_INFO(get_logger(), "Starting Sensor!!!!!!");
     return true;
   }
-  void set_zero() {
+  void set_zero()
+  {
     INT_8 buffer[512];
     std::string set_zero = "SET ZRO";
-    decode_message_and_do((char *)set_zero.c_str(), buffer);
+    decode_message_and_do((char*)set_zero.c_str(), buffer);
   }
   bool receiverCallback(std::shared_ptr<robotiq_ft_sensor_interfaces::srv::SensorAccessor::Request> req,
-                        std::shared_ptr<robotiq_ft_sensor_interfaces::srv::SensorAccessor::Response> res) {
-
+                        std::shared_ptr<robotiq_ft_sensor_interfaces::srv::SensorAccessor::Response> res)
+  {
     /// Support for old string-based interface
-    if (req->command.length()) {
+    if (req->command.length())
+    {
       RCLCPP_WARN_ONCE(get_logger(), "Usage of command-string is deprecated, please use the numeric command_id");
       RCLCPP_INFO(get_logger(), "I heard: [%s]", req->command.c_str());
       INT_8 buffer[512];
-      decode_message_and_do((char *)req->command.c_str(), buffer);
+      decode_message_and_do((char*)req->command.c_str(), buffer);
       res->res = buffer;
       RCLCPP_INFO(get_logger(), "I send: [%s]", res->res.c_str());
       return true;
@@ -118,17 +133,21 @@ public:
     decode_message_and_do(req, res);
     return true;
   }
-  bool update() {
+  bool update()
+  {
     ret_ = sensor_state_machine();
-    if (ret_ == -1) {
+    if (ret_ == -1)
+    {
       wait_for_other_connection();
     }
 
-    if (rq_sensor_get_current_state() == RQ_STATE_RUN) {
+    if (rq_sensor_get_current_state() == RQ_STATE_RUN)
+    {
       strcpy(bufStream_, "");
       msgStream_ = get_data();
 
-      if (rq_state_got_new_message()) {
+      if (rq_state_got_new_message())
+      {
         // pub_sensor_->publish(msgStream_);
 
         // compose WrenchStamped Msg
@@ -161,55 +180,69 @@ private:
 
   //
   bool decode_message_and_do(robotiq_ft_sensor_interfaces::srv::SensorAccessor::Request::SharedPtr req,
-                             robotiq_ft_sensor_interfaces::srv::SensorAccessor::Response::SharedPtr res) {
+                             robotiq_ft_sensor_interfaces::srv::SensorAccessor::Response::SharedPtr res)
+  {
     INT_8 buffer[100];
     res->success = rq_state_get_command(req->command_id, buffer);
     res->res = buffer;
 
-    if (!res->success) {
-      RCLCPP_WARN(get_logger(), "Unsupported command_id %i, should be in [%i, %i, %i, %i]", req->command_id, req->COMMAND_GET_SERIAL_NUMBER,
-                  req->COMMAND_GET_FIRMWARE_VERSION, req->COMMAND_GET_PRODUCTION_YEAR, req->COMMAND_SET_ZERO);
+    if (!res->success)
+    {
+      RCLCPP_WARN(get_logger(), "Unsupported command_id %i, should be in [%i, %i, %i, %i]", req->command_id,
+                  req->COMMAND_GET_SERIAL_NUMBER, req->COMMAND_GET_FIRMWARE_VERSION, req->COMMAND_GET_PRODUCTION_YEAR,
+                  req->COMMAND_SET_ZERO);
     }
 
     return res->success;
   }
-  void decode_message_and_do(INT_8 const *const buff, INT_8 *const ret) {
+  void decode_message_and_do(INT_8 const* const buff, INT_8* const ret)
+  {
     INT_8 get_or_set[3];
     INT_8 nom_var[4];
 
-    if (buff == NULL || strlen(buff) != 7) {
+    if (buff == NULL || strlen(buff) != 7)
+    {
       return;
     }
 
     strncpy(get_or_set, &buff[0], 3);
     strncpy(nom_var, &buff[4], strlen(buff) - 3);
 
-    if (strstr(get_or_set, "GET")) {
+    if (strstr(get_or_set, "GET"))
+    {
       rq_state_get_command(nom_var, ret);
-    } else if (strstr(get_or_set, "SET")) {
-      if (strstr(nom_var, "ZRO")) {
+    }
+    else if (strstr(get_or_set, "SET"))
+    {
+      if (strstr(nom_var, "ZRO"))
+      {
         rq_state_do_zero_force_flag();
         strcpy(ret, "Done");
       }
     }
   }
-  INT_8 sensor_state_machine() {
-    if (ftdi_id.empty()) {
+  INT_8 sensor_state_machine()
+  {
+    if (ftdi_id.empty())
+    {
       return rq_sensor_state(max_retries_);
     }
 
     return rq_sensor_state(max_retries_, ftdi_id);
   }
-  void wait_for_other_connection() {
+  void wait_for_other_connection()
+  {
     INT_8 ret;
 
-    while (rclcpp::ok()) {
+    while (rclcpp::ok())
+    {
       RCLCPP_INFO(get_logger(), "Waiting for sensor connection...");
-      usleep(1000000); // Attend 1 seconde.
+      usleep(1000000);  // Attend 1 seconde.
 
       ret = sensor_state_machine();
       RCLCPP_INFO(get_logger(), "ret is %d", ret);
-      if (ret == 0) {
+      if (ret == 0)
+      {
         RCLCPP_INFO(get_logger(), "Sensor connected!");
         return;
       }
@@ -217,7 +250,8 @@ private:
       // executor_.spin_once();
     }
   }
-  robotiq_ft_sensor_interfaces::msg::FTSensor get_data(void) {
+  robotiq_ft_sensor_interfaces::msg::FTSensor get_data(void)
+  {
     robotiq_ft_sensor_interfaces::msg::FTSensor msgStream;
 
     msgStream.fx = rq_state_get_received_data(0);
@@ -234,7 +268,8 @@ private:
 /**
  * This tutorial demonstrates simple sending of messages over the ROS system.
  */
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   rclcpp::init(argc, argv);
   rclcpp::NodeOptions node_options;
   node_options.automatically_declare_parameters_from_overrides(true);

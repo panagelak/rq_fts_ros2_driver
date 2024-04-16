@@ -51,7 +51,7 @@
 #define MP_BUFF_SIZE 1024
 
 INT_8 rq_sensor_com();
-INT_8 rq_sensor_com(const std::string &);
+INT_8 rq_sensor_com(const std::string&);
 void rq_sensor_com_read_info_high_lvl(void);
 INT_8 rq_com_start_stream(void);
 void rq_com_listen_stream(void);
@@ -59,12 +59,12 @@ bool rq_com_get_stream_detected(void);
 bool rq_com_get_valid_stream(void);
 
 // Accesseur
-void rq_com_get_str_serial_number(INT_8 *serial_number);
-void rq_com_get_str_firmware_version(INT_8 *firmware_version);
-void rq_com_get_str_production_year(INT_8 *production_year);
+void rq_com_get_str_serial_number(INT_8* serial_number);
+void rq_com_get_str_firmware_version(INT_8* firmware_version);
+void rq_com_get_str_production_year(INT_8* production_year);
 float rq_com_get_received_data(UINT_8 i);
 bool rq_com_got_new_message(void);
 void rq_com_do_zero_force_flag(void);
 void stop_connection(void);
 
-#endif // RQ_SENSOR_COM_H
+#endif  // RQ_SENSOR_COM_H
