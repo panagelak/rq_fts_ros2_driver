@@ -21,7 +21,7 @@
           <param name="read_rate">${read_rate}</param>
           <param name="ftdi_id">${ftdi_id}</param>
       </hardware>
-      <sensor name="${tf_prefix}robotiq_fts_sensor">
+      <sensor name="${tf_prefix}robotiq_ft_sensor">
         <state_interface name="force.x"/>
         <state_interface name="force.y"/>
         <state_interface name="force.z"/>

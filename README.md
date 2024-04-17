@@ -79,7 +79,7 @@ The controller will publish a topic of type WrenchStamped on the topic name *con
   # will publish the robotiq_force_torque_sensor_broadcaster/wrench topic of type WrenchStamped with the given frame_id
   robotiq_force_torque_sensor_broadcaster:
     ros__parameters:
-      sensor_name: robotiq_fts_sensor
+      sensor_name: robotiq_ft_sensor
       state_interface_names:
         - force.x
         - force.y
@@ -120,7 +120,7 @@ The only requirement for the hardware interfaces to be dynamically loaded and ru
           <param name="read_rate">${read_rate}</param>
           <param name="ftdi_id">${ftdi_id}</param>
       </hardware>
-      <sensor name="robotiq_fts_sensor">
+      <sensor name="robotiq_ft_sensor">
         <state_interface name="force.x"/>
         <state_interface name="force.y"/>
         <state_interface name="force.z"/>
