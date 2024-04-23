@@ -83,6 +83,7 @@ private:
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr srv_zero_fts_;
   rclcpp::Logger logger_{ rclcpp::get_logger("RobotiqFTSensorHardware") };
   // urdf parameters
+  bool use_fake_mode_;
   int max_retries_ = 100;
   int read_rate_ = 10;
   std::string ftdi_id_;

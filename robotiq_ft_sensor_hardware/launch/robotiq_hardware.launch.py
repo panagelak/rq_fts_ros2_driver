@@ -23,8 +23,6 @@ def launch_setup(context, *args, **kwargs):
     read_rate = LaunchConfiguration("read_rate")
     ftdi_id = LaunchConfiguration("ftdi_id")
     use_fake_mode = LaunchConfiguration("use_fake_mode")
-    use_add_fts_wrench = LaunchConfiguration("use_add_fts_wrench")
-    add_fts_wrench_topic = LaunchConfiguration("add_fts_wrench_topic")
 
     # Get URDF via xacro
     robot_description_content = Command(
@@ -43,12 +41,6 @@ def launch_setup(context, *args, **kwargs):
             " ",
             "use_fake_mode:=",
             use_fake_mode,
-            " ",
-            "use_add_fts_wrench:=",
-            use_add_fts_wrench,
-            " ",
-            "add_fts_wrench_topic:=",
-            add_fts_wrench_topic,
             " ",
             "max_retries:=",
             max_retries,
@@ -165,12 +157,6 @@ def generate_launch_description():
 
     declared_arguments.append(
         DeclareLaunchArgument("use_fake_mode", default_value="false")
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument("use_add_fts_wrench", default_value="true")
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument("add_fts_wrench_topic", default_value="add_fts_wrench")
     )
 
     return LaunchDescription(

@@ -45,6 +45,8 @@ hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_init(const hardwa
   }
 
   // parameters
+  use_fake_mode_ =
+      info_.hardware_parameters["use_fake_mode"] == "True" || info_.hardware_parameters["use_fake_mode"] == "true";
   max_retries_ = std::stoi(info_.hardware_parameters["max_retries"]);
   read_rate_ = std::stoi(info_.hardware_parameters["read_rate"]);
   ftdi_id_ = info_.hardware_parameters["ftdi_id"];
@@ -66,6 +68,7 @@ hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_init(const hardwa
     return CallbackReturn::ERROR;
   }
 
+  RCLCPP_INFO(logger_, "Parameter : use_fake_mode -> %d", use_fake_mode_);
   RCLCPP_INFO(logger_, "Parameter : max_retries -> %d", max_retries_);
   RCLCPP_INFO(logger_, "Parameter : read_rate -> %d", read_rate_);
   RCLCPP_INFO(logger_, "Parameter : ftdi_id -> %s", ftdi_id_.c_str());
@@ -88,28 +91,31 @@ std::vector<hardware_interface::StateInterface> RobotiqFTSensorHardware::export_
 
 void RobotiqFTSensorHardware::read_background()
 {
-  ret_ = sensor_state_machine();
-  if (ret_ == -1)
+  if (!use_fake_mode_)
   {
-    wait_for_other_connection();
-  }
-
-  if (rq_sensor_get_current_state() == RQ_STATE_RUN)
-  {
-    strcpy(bufStream_, "");
-    // auto msgStream = get_data();
-
-    if (rq_state_got_new_message())
+    ret_ = sensor_state_machine();
+    if (ret_ == -1)
     {
-      std::array<double, 6> sensor_reading_background{};
-      sensor_reading_background[0] = rq_state_get_received_data(0);
-      sensor_reading_background[1] = rq_state_get_received_data(1);
-      sensor_reading_background[2] = rq_state_get_received_data(2);
-      sensor_reading_background[3] = rq_state_get_received_data(3);
-      sensor_reading_background[4] = rq_state_get_received_data(4);
-      sensor_reading_background[5] = rq_state_get_received_data(5);
+      wait_for_other_connection();
+    }
 
-      sensor_readings_.writeFromNonRT(sensor_reading_background);
+    if (rq_sensor_get_current_state() == RQ_STATE_RUN)
+    {
+      strcpy(bufStream_, "");
+      // auto msgStream = get_data();
+
+      if (rq_state_got_new_message())
+      {
+        std::array<double, 6> sensor_reading_background{};
+        sensor_reading_background[0] = rq_state_get_received_data(0);
+        sensor_reading_background[1] = rq_state_get_received_data(1);
+        sensor_reading_background[2] = rq_state_get_received_data(2);
+        sensor_reading_background[3] = rq_state_get_received_data(3);
+        sensor_reading_background[4] = rq_state_get_received_data(4);
+        sensor_reading_background[5] = rq_state_get_received_data(5);
+
+        sensor_readings_.writeFromNonRT(sensor_reading_background);
+      }
     }
   }
 }
@@ -118,33 +124,36 @@ hardware_interface::CallbackReturn
 RobotiqFTSensorHardware::on_activate(const rclcpp_lifecycle::State& /*previous_state*/)
 {
   RCLCPP_INFO(logger_, "Activating ...please wait...");
-  // Connect
-  if (!ftdi_id_.empty())
+  if (!use_fake_mode_)
   {
-    RCLCPP_INFO(logger_, "Trying to connect to a sensor at /dev/%s", ftdi_id_.c_str());
-  }
-  else
-  {
-    RCLCPP_INFO(logger_, "No device filename specified. Will attempt to discover Robotiq force torque sensor.");
-  }
-  // Connect
-  // If we can't initialize, we return an error
-  ret_ = sensor_state_machine();
-  if (ret_ == -1)
-  {
-    wait_for_other_connection();
-  }
-  // Reads basic info on the sensor
-  ret_ = sensor_state_machine();
-  if (ret_ == -1)
-  {
-    wait_for_other_connection();
-  }
-  // Starts the stream
-  ret_ = sensor_state_machine();
-  if (ret_ == -1)
-  {
-    wait_for_other_connection();
+    // Connect
+    if (!ftdi_id_.empty())
+    {
+      RCLCPP_INFO(logger_, "Trying to connect to a sensor at /dev/%s", ftdi_id_.c_str());
+    }
+    else
+    {
+      RCLCPP_INFO(logger_, "No device filename specified. Will attempt to discover Robotiq force torque sensor.");
+    }
+    // Connect
+    // If we can't initialize, we return an error
+    ret_ = sensor_state_machine();
+    if (ret_ == -1)
+    {
+      wait_for_other_connection();
+    }
+    // Reads basic info on the sensor
+    ret_ = sensor_state_machine();
+    if (ret_ == -1)
+    {
+      wait_for_other_connection();
+    }
+    // Starts the stream
+    ret_ = sensor_state_machine();
+    if (ret_ == -1)
+    {
+      wait_for_other_connection();
+    }
   }
 
   for (auto& value : hw_sensor_states_)
@@ -194,7 +203,19 @@ RobotiqFTSensorHardware::on_deactivate(const rclcpp_lifecycle::State& /*previous
 hardware_interface::return_type RobotiqFTSensorHardware::read(const rclcpp::Time& /*time*/,
                                                               const rclcpp::Duration& /*period*/)
 {
-  hw_sensor_states_ = *(sensor_readings_.readFromRT());
+  if (use_fake_mode_)
+  {
+    hw_sensor_states_[0] = 0.0;
+    hw_sensor_states_[1] = 0.0;
+    hw_sensor_states_[2] = 0.0;
+    hw_sensor_states_[3] = 0.0;
+    hw_sensor_states_[4] = 0.0;
+    hw_sensor_states_[5] = 0.0;
+  }
+  else
+  {
+    hw_sensor_states_ = *(sensor_readings_.readFromRT());
+  }
 
   return hardware_interface::return_type::OK;
 }
