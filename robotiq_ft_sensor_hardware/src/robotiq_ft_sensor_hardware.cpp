@@ -169,7 +169,8 @@ RobotiqFTSensorHardware::on_activate(const rclcpp_lifecycle::State& /*previous_s
   srv_zero_fts_ = async_node_->create_service<std_srvs::srv::Trigger>(
       "/io_and_status_controller/zero_ftsensor",
       std::bind(&RobotiqFTSensorHardware::set_zero, this, std::placeholders::_1, std::placeholders::_2));
-
+  sub_add_wrench_ = async_node_->create_subscription<geometry_msgs::msg::WrenchStamped>(
+      "add_fts_wrench", 10, std::bind(&RobotiqFTSensorHardware::wrenchAddCB, this, std::placeholders::_1));
   timer_ = async_node_->create_wall_timer(std::chrono::milliseconds(read_rate_),
                                           std::bind(&RobotiqFTSensorHardware::read_background, this));
 
@@ -216,7 +217,13 @@ hardware_interface::return_type RobotiqFTSensorHardware::read(const rclcpp::Time
   {
     hw_sensor_states_ = *(sensor_readings_.readFromRT());
   }
-
+  // add from add extra wrench topic
+  hw_sensor_states_[0] += add_wrench_msg_.wrench.force.x;
+  hw_sensor_states_[1] += add_wrench_msg_.wrench.force.y;
+  hw_sensor_states_[2] += add_wrench_msg_.wrench.force.z;
+  hw_sensor_states_[3] += add_wrench_msg_.wrench.torque.x;
+  hw_sensor_states_[4] += add_wrench_msg_.wrench.torque.y;
+  hw_sensor_states_[5] += add_wrench_msg_.wrench.torque.z;
   return hardware_interface::return_type::OK;
 }
 

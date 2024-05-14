@@ -69,6 +69,13 @@ public:
   hardware_interface::return_type read(const rclcpp::Time& time, const rclcpp::Duration& period) override;
 
 private:
+  rclcpp::Subscription<geometry_msgs::msg::WrenchStamped>::SharedPtr sub_add_wrench_;
+  geometry_msgs::msg::WrenchStamped add_wrench_msg_;
+  void wrenchAddCB(const geometry_msgs::msg::WrenchStamped::ConstSharedPtr& msg)
+  {
+    add_wrench_msg_ = *msg.get();
+  }
+
   void read_background();
 
   // Store the sensor states for the simulated robot
