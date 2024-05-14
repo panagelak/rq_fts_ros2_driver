@@ -11,15 +11,18 @@ using namespace std::chrono_literals;
 /* This example creates a subclass of Node and uses std::bind() to register a
  * member function as a callback from the timer. */
 
-class MinimalPublisher : public rclcpp::Node {
+class MinimalPublisher : public rclcpp::Node
+{
 public:
-  MinimalPublisher() : Node("minimal_wrench_publisher"), count_(0) {
+  MinimalPublisher() : Node("minimal_wrench_publisher"), count_(0)
+  {
     publisher_ = this->create_publisher<geometry_msgs::msg::WrenchStamped>("add_fts_wrench", 10);
     timer_ = this->create_wall_timer(8ms, std::bind(&MinimalPublisher::timer_callback, this));
   }
 
 private:
-  void timer_callback() {
+  void timer_callback()
+  {
     auto message = geometry_msgs::msg::WrenchStamped();
     message.header.frame_id = "";
     message.header.stamp = shared_from_this()->get_clock()->now();
@@ -36,7 +39,8 @@ private:
   size_t count_;
 };
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[])
+{
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<MinimalPublisher>());
   rclcpp::shutdown();

@@ -8,12 +8,16 @@
 
 #include <geometry_msgs/msg/wrench_stamped.hpp>
 
-class WrenchSimulator : public rclcpp::Node {
+class WrenchSimulator : public rclcpp::Node
+{
 public:
-  WrenchSimulator(const rclcpp::NodeOptions &options = rclcpp::NodeOptions()) : Node("wrench_simulator", options) {}
-  bool initialize(std::string topic_name) {
-    sub_wrench_ =
-        this->create_subscription<geometry_msgs::msg::WrenchStamped>(topic_name, 10, std::bind(&WrenchSimulator::wrenchCB, this, std::placeholders::_1));
+  WrenchSimulator(const rclcpp::NodeOptions& options = rclcpp::NodeOptions()) : Node("wrench_simulator", options)
+  {
+  }
+  bool initialize(std::string topic_name)
+  {
+    sub_wrench_ = this->create_subscription<geometry_msgs::msg::WrenchStamped>(
+        topic_name, 10, std::bind(&WrenchSimulator::wrenchCB, this, std::placeholders::_1));
     node_ = shared_from_this();
     sim_wrench_.header.stamp = shared_from_this()->get_clock()->now();
     sim_wrench_.header.frame_id = "";
@@ -27,17 +31,20 @@ public:
     return true;
   }
 
-  void spin() {
+  void spin()
+  {
     executor_.add_node(node_);
     executor_.spin();
   }
 
-  geometry_msgs::msg::WrenchStamped read_wrench() {
+  geometry_msgs::msg::WrenchStamped read_wrench()
+  {
     return sim_wrench_;
   }
 
 private:
-  void wrenchCB(const geometry_msgs::msg::WrenchStamped::ConstSharedPtr &msg) {
+  void wrenchCB(const geometry_msgs::msg::WrenchStamped::ConstSharedPtr& msg)
+  {
     sim_wrench_ = *msg.get();
   }
 

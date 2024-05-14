@@ -35,80 +35,144 @@
 
 #include "robotiq_ft_sensor_hardware/robotiq_ft_sensor_hardware.hpp"
 
-namespace robotiq_ft_sensor_hardware {
-hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_init(const hardware_interface::HardwareInfo &info) {
-  if (hardware_interface::SensorInterface::on_init(info) != hardware_interface::CallbackReturn::SUCCESS) {
-    return hardware_interface::CallbackReturn::ERROR;
+namespace robotiq_ft_sensor_hardware
+{
+hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_init(const hardware_interface::HardwareInfo& info)
+{
+  if (hardware_interface::SensorInterface::on_init(info) != hardware_interface::CallbackReturn::SUCCESS)
+  {
+    return CallbackReturn::ERROR;
   }
-
-  use_fake_mode_ = info_.hardware_parameters["use_fake_mode"] == "True" || info_.hardware_parameters["use_fake_mode"] == "true";
-  use_add_fts_wrench_ = info_.hardware_parameters["use_add_fts_wrench"] == "True" || info_.hardware_parameters["use_add_fts_wrench"] == "true";
-  if (use_add_fts_wrench_) {
-    add_fts_wrench_topic_ = info_.hardware_parameters["add_fts_wrench_topic"];
-  }
-  hw_sensor_states_.resize(info_.sensors[0].state_interfaces.size(), std::numeric_limits<double>::quiet_NaN());
 
   // parameters
+  use_fake_mode_ =
+      info_.hardware_parameters["use_fake_mode"] == "True" || info_.hardware_parameters["use_fake_mode"] == "true";
   max_retries_ = std::stoi(info_.hardware_parameters["max_retries"]);
+  read_rate_ = std::stoi(info_.hardware_parameters["read_rate"]);
   ftdi_id_ = info_.hardware_parameters["ftdi_id"];
   if (ftdi_id_.size() == 1)
+  {
     ftdi_id_ = "";
+  }
+  if (info_.sensors.size() != 1)
+  {
+    RCLCPP_ERROR(logger_, "The Robotiq FT driver only supports one sensor. Number of sensors specified: %zu",
+                 info_.sensors.size());
+    return CallbackReturn::ERROR;
+  }
+  sensor_ = info_.sensors[0];
+  if (sensor_.state_interfaces.size() != 6)
+  {
+    RCLCPP_ERROR(logger_, "The Robotiq FT driver expects 6 state interfaces. Number of state interfaces specified: %zu",
+                 sensor_.state_interfaces.size());
+    return CallbackReturn::ERROR;
+  }
+
   RCLCPP_INFO(logger_, "Parameter : use_fake_mode -> %d", use_fake_mode_);
-  RCLCPP_INFO(logger_, "Parameter : use_add_fts_wrench -> %d", use_add_fts_wrench_);
-  RCLCPP_INFO(logger_, "Parameter : add_fts_wrench_topic -> %s", add_fts_wrench_topic_.c_str());
   RCLCPP_INFO(logger_, "Parameter : max_retries -> %d", max_retries_);
+  RCLCPP_INFO(logger_, "Parameter : read_rate -> %d", read_rate_);
   RCLCPP_INFO(logger_, "Parameter : ftdi_id -> %s", ftdi_id_.c_str());
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-std::vector<hardware_interface::StateInterface> RobotiqFTSensorHardware::export_state_interfaces() {
+std::vector<hardware_interface::StateInterface> RobotiqFTSensorHardware::export_state_interfaces()
+{
   std::vector<hardware_interface::StateInterface> state_interfaces;
   RCLCPP_INFO(logger_, "Exporting State Interfaces");
-  for (auto &sensor : info_.sensors) {
-    for (uint j = 0; j < sensor.state_interfaces.size(); ++j) {
-      RCLCPP_INFO(logger_, "Sensor %s state %s", sensor.name.c_str(), sensor.state_interfaces[j].name.c_str());
-      state_interfaces.emplace_back(hardware_interface::StateInterface(sensor.name, sensor.state_interfaces[j].name, &hw_sensor_states_[j]));
-    }
+
+  for (uint j = 0; j < sensor_.state_interfaces.size(); ++j)
+  {
+    RCLCPP_INFO(logger_, "Sensor %s state %s", sensor_.name.c_str(), sensor_.state_interfaces[j].name.c_str());
+    state_interfaces.emplace_back(sensor_.name, sensor_.state_interfaces[j].name, &hw_sensor_states_[j]);
   }
+
   return state_interfaces;
 }
 
-hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_activate(const rclcpp_lifecycle::State & /*previous_state*/) {
+void RobotiqFTSensorHardware::read_background()
+{
+  if (!use_fake_mode_)
+  {
+    ret_ = sensor_state_machine();
+    if (ret_ == -1)
+    {
+      wait_for_other_connection();
+    }
+
+    if (rq_sensor_get_current_state() == RQ_STATE_RUN)
+    {
+      strcpy(bufStream_, "");
+      // auto msgStream = get_data();
+
+      if (rq_state_got_new_message())
+      {
+        std::array<double, 6> sensor_reading_background{};
+        sensor_reading_background[0] = rq_state_get_received_data(0);
+        sensor_reading_background[1] = rq_state_get_received_data(1);
+        sensor_reading_background[2] = rq_state_get_received_data(2);
+        sensor_reading_background[3] = rq_state_get_received_data(3);
+        sensor_reading_background[4] = rq_state_get_received_data(4);
+        sensor_reading_background[5] = rq_state_get_received_data(5);
+
+        sensor_readings_.writeFromNonRT(sensor_reading_background);
+      }
+    }
+  }
+}
+
+hardware_interface::CallbackReturn
+RobotiqFTSensorHardware::on_activate(const rclcpp_lifecycle::State& /*previous_state*/)
+{
   RCLCPP_INFO(logger_, "Activating ...please wait...");
-  if (!use_fake_mode_) {
+  if (!use_fake_mode_)
+  {
     // Connect
-    if (!ftdi_id_.empty()) {
+    if (!ftdi_id_.empty())
+    {
       RCLCPP_INFO(logger_, "Trying to connect to a sensor at /dev/%s", ftdi_id_.c_str());
-    } else {
+    }
+    else
+    {
       RCLCPP_INFO(logger_, "No device filename specified. Will attempt to discover Robotiq force torque sensor.");
     }
     // Connect
     // If we can't initialize, we return an error
     ret_ = sensor_state_machine();
-    if (ret_ == -1) {
+    if (ret_ == -1)
+    {
       wait_for_other_connection();
     }
     // Reads basic info on the sensor
     ret_ = sensor_state_machine();
-    if (ret_ == -1) {
+    if (ret_ == -1)
+    {
       wait_for_other_connection();
     }
     // Starts the stream
     ret_ = sensor_state_machine();
-    if (ret_ == -1) {
+    if (ret_ == -1)
+    {
       wait_for_other_connection();
     }
   }
+
+  for (auto& value : hw_sensor_states_)
+  {
+    value = std::numeric_limits<double>::quiet_NaN();
+  }
+  sensor_readings_.writeFromNonRT(hw_sensor_states_);
+
   //=== ASYNC NODE
   rclcpp::NodeOptions options;
-  options.arguments({"--ros-args", "-r", "__node:=robotiq_ft_hardware_internal_" + info_.name});
+  options.arguments({ "--ros-args", "-r", "__node:=robotiq_ft_hardware_internal_" + info_.name });
   async_node_ = rclcpp::Node::make_shared("_", options);
-  srv_sensor_accessor_ = async_node_->create_service<robotiq_ft_sensor_interfaces::srv::SensorAccessor>(
-      "robotiq_ft_sensor_acc", std::bind(&RobotiqFTSensorHardware::receiverCallback, this, std::placeholders::_1, std::placeholders::_2));
-  if (use_add_fts_wrench_) {
-    sub_add_wrench_ = async_node_->create_subscription<geometry_msgs::msg::WrenchStamped>(
-        add_fts_wrench_topic_, 10, std::bind(&RobotiqFTSensorHardware::wrenchAddCB, this, std::placeholders::_1));
-  }
+  srv_zero_fts_ = async_node_->create_service<std_srvs::srv::Trigger>(
+      "/io_and_status_controller/zero_ftsensor",
+      std::bind(&RobotiqFTSensorHardware::set_zero, this, std::placeholders::_1, std::placeholders::_2));
+
+  timer_ = async_node_->create_wall_timer(std::chrono::milliseconds(read_rate_),
+                                          std::bind(&RobotiqFTSensorHardware::read_background, this));
+
   node_thread_ = std::make_unique<std::thread>([&]() {
     executor_.add_node(async_node_);
     executor_.spin();
@@ -119,62 +183,44 @@ hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_activate(const rc
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) {
+hardware_interface::CallbackReturn
+RobotiqFTSensorHardware::on_deactivate(const rclcpp_lifecycle::State& /*previous_state*/)
+{
   RCLCPP_INFO(logger_, "Deactivating ...please wait...");
   //
   executor_.cancel();
   node_thread_->join();
   node_thread_.reset();
-  srv_sensor_accessor_.reset();
-  sub_add_wrench_.reset();
+  srv_zero_fts_.reset();
   async_node_.reset();
   //
-  // TODO DEACTIVE RQ SENSOR
+  // TODO DEACTIVATE RQ SENSOR
   //
   RCLCPP_INFO(logger_, "Successfully deactivated!");
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-hardware_interface::return_type RobotiqFTSensorHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) {
-  if (use_fake_mode_) {
+hardware_interface::return_type RobotiqFTSensorHardware::read(const rclcpp::Time& /*time*/,
+                                                              const rclcpp::Duration& /*period*/)
+{
+  if (use_fake_mode_)
+  {
     hw_sensor_states_[0] = 0.0;
     hw_sensor_states_[1] = 0.0;
     hw_sensor_states_[2] = 0.0;
     hw_sensor_states_[3] = 0.0;
     hw_sensor_states_[4] = 0.0;
     hw_sensor_states_[5] = 0.0;
-  } else {
-    ret_ = sensor_state_machine();
-    if (ret_ == -1) {
-      wait_for_other_connection();
-    }
-
-    if (rq_sensor_get_current_state() == RQ_STATE_RUN) {
-      strcpy(bufStream_, "");
-      // auto msgStream = get_data();
-
-      if (rq_state_got_new_message()) {
-        hw_sensor_states_[0] = rq_state_get_received_data(0);
-        hw_sensor_states_[1] = rq_state_get_received_data(1);
-        hw_sensor_states_[2] = rq_state_get_received_data(2);
-        hw_sensor_states_[3] = rq_state_get_received_data(3);
-        hw_sensor_states_[4] = rq_state_get_received_data(4);
-        hw_sensor_states_[5] = rq_state_get_received_data(5);
-      }
-    }
   }
-  if (use_add_fts_wrench_) {
-    hw_sensor_states_[0] += add_wrench_msg_.wrench.force.x;
-    hw_sensor_states_[1] += add_wrench_msg_.wrench.force.y;
-    hw_sensor_states_[2] += add_wrench_msg_.wrench.force.z;
-    hw_sensor_states_[3] += add_wrench_msg_.wrench.torque.x;
-    hw_sensor_states_[4] += add_wrench_msg_.wrench.torque.y;
-    hw_sensor_states_[5] += add_wrench_msg_.wrench.torque.z;
+  else
+  {
+    hw_sensor_states_ = *(sensor_readings_.readFromRT());
   }
+
   return hardware_interface::return_type::OK;
 }
 
-} // namespace robotiq_ft_sensor_hardware
+}  // namespace robotiq_ft_sensor_hardware
 
 #include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS(robotiq_ft_sensor_hardware::RobotiqFTSensorHardware, hardware_interface::SensorInterface)

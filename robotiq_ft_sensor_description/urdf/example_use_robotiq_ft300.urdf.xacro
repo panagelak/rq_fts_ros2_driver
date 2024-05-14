@@ -4,9 +4,8 @@
   <!-- args -->
   <xacro:arg name="name" default="robotiq_ft_sensor"/>
   <xacro:arg name="use_fake_mode" default="false"/>
-  <xacro:arg name="use_add_fts_wrench" default="true"/>
-  <xacro:arg name="add_fts_wrench_topic" default="add_fts_wrench"/>
   <xacro:arg name="max_retries" default="100"/>
+  <xacro:arg name="read_rate" default="10"/>
   <xacro:arg name="ftdi_id" default=""/>
   <xacro:arg name="tf_prefix" default=""/>
 
@@ -26,9 +25,8 @@
   <xacro:robotiq_fts_ros2_control
       name="$(arg name)"
       use_fake_mode="$(arg use_fake_mode)"
-      use_add_fts_wrench="$(arg use_add_fts_wrench)"
-      add_fts_wrench_topic="$(arg add_fts_wrench_topic)"
       max_retries="$(arg max_retries)"
+      read_rate="$(arg read_rate)"
       ftdi_id="$(arg ftdi_id)"
       tf_prefix="$(arg tf_prefix)"
   />

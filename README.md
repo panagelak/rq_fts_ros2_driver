@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository implemets
+This repository implements
 
 1) hardware sensor interface plugin for the robotiq force torque sensors
 
@@ -21,7 +21,7 @@ Most of the code is directly copied by the original ros1 driver [Robotiq ros dri
 ```bash
 # Step 1 Clone the repository
 
-# Install debian depedencies
+# Install debian dependencies
 rosdep install --from-paths src --ignore-src -r -y
 
 # Build
@@ -79,7 +79,7 @@ The controller will publish a topic of type WrenchStamped on the topic name *con
   # will publish the robotiq_force_torque_sensor_broadcaster/wrench topic of type WrenchStamped with the given frame_id
   robotiq_force_torque_sensor_broadcaster:
     ros__parameters:
-      sensor_name: robotiq_fts_sensor
+      sensor_name: robotiq_ft_sensor
       state_interface_names:
         - force.x
         - force.y
@@ -104,21 +104,19 @@ The only requirement for the hardware interfaces to be dynamically loaded and ru
   <xacro:macro name="robotiq_fts_ros2_control" params="
     name
     use_fake_mode:=false
-    use_add_fts_wrench:=true
-    add_fts_wrench_topic:=add_fts_wrench
     max_retries:=1
+    read_rate:=10
     ftdi_id:=''
   ">
     <ros2_control name="${name}robotiq_ft_sensor" type="sensor">
       <hardware>
           <plugin>robotiq_ft_sensor_hardware/RobotiqFTSensorHardware</plugin>
           <param name="use_fake_mode">${use_fake_mode}</param>
-          <param name="use_add_fts_wrench">${use_add_fts_wrench}</param>
-          <param name="add_fts_wrench_topic">${add_fts_wrench_topic}</param>
           <param name="max_retries">${max_retries}</param>
+          <param name="read_rate">${read_rate}</param>
           <param name="ftdi_id">${ftdi_id}</param>
       </hardware>
-      <sensor name="robotiq_fts_sensor">
+      <sensor name="robotiq_ft_sensor">
         <state_interface name="force.x"/>
         <state_interface name="force.y"/>
         <state_interface name="force.z"/>
@@ -141,9 +139,8 @@ Example to use the robotiq fts hardware interface in combination with your robot
   <!-- args -->
   <xacro:arg name="name" default="robotiq_ft_sensor"/> <!-- your robot name -->
   <xacro:arg name="use_fake_mode" default="false"/>
-  <xacro:arg name="use_add_fts_wrench" default="true"/>
-  <xacro:arg name="add_fts_wrench_topic" default="add_fts_wrench"/>
   <xacro:arg name="max_retries" default="100"/>
+  <xacro:arg name="read_rate" default="10"/>
   <xacro:arg name="ftdi_id" default=""/>
   <xacro:arg name="tf_prefix" default=""/>
 
@@ -154,9 +151,8 @@ Example to use the robotiq fts hardware interface in combination with your robot
   <xacro:robotiq_fts_ros2_control
       name="$(arg name)"
       use_fake_mode="$(arg use_fake_mode)"
-      use_add_fts_wrench="$(arg use_add_fts_wrench)"
-      add_fts_wrench_topic="$(arg add_fts_wrench_topic)"
       max_retries="$(arg max_retries)"
+      read_rate="$(arg read_rate)"
       ftdi_id="$(arg ftdi_id)"
   />
 
@@ -172,5 +168,3 @@ Furthermore **an optional WrenchStamped subscriber is created which will append 
 # Disclaimer 
 
 Most of the code is directly copied by the original ros1 driver [Robotiq ros driver](https://github.com/ros-industrial/robotiq) so the original licenses and maintainers remain.
-
-

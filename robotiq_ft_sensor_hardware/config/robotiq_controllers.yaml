@@ -16,7 +16,7 @@
   # will publish the robotiq_force_torque_sensor_broadcaster/wrench topic of type WrenchStamped with the given frame_id
   robotiq_force_torque_sensor_broadcaster:
     ros__parameters:
-      sensor_name: robotiq_fts_sensor
+      sensor_name: robotiq_ft_sensor
       state_interface_names:
         - force.x
         - force.y
@@ -59,7 +59,7 @@
         alpha: 0.0005
 
       ft_sensor:
-        name: robotiq_fts_sensor # Sensor name
+        name: robotiq_ft_sensor # Sensor name
         frame:
           id: robotiq_ft_frame_id # Wrench measurements are in this frame
           external: false # force torque frame exists within URDF kinematic chain
