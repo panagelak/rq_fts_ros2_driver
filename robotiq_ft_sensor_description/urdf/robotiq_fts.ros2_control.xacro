@@ -8,6 +8,18 @@
     read_rate:=10
     ftdi_id:=''
     tf_prefix
+    offset_x:=0.0
+    offset_y:=0.0
+    offset_z:=0.0
+    offset_rx:=0.0
+    offset_ry:=0.0
+    offset_rz:=0.0
+    min_x:=0.0
+    min_y:=0.0
+    min_z:=0.0
+    min_rx:=0.0
+    min_ry:=0.0
+    min_rz:=0.0
   ">
     <ros2_control name="${name}robotiq_ft_sensor" type="sensor">
       <hardware>
@@ -16,6 +28,18 @@
           <param name="max_retries">${max_retries}</param>
           <param name="read_rate">${read_rate}</param>
           <param name="ftdi_id">${ftdi_id}</param>
+          <param name="offset_x">${offset_x}</param>
+          <param name="offset_y">${offset_y}</param>
+          <param name="offset_z">${offset_z}</param>
+          <param name="offset_rx">${offset_rx}</param>
+          <param name="offset_ry">${offset_ry}</param>
+          <param name="offset_rz">${offset_rz}</param>
+          <param name="min_x">${min_x}</param>
+          <param name="min_y">${min_y}</param>
+          <param name="min_z">${min_z}</param>
+          <param name="min_rx">${min_rx}</param>
+          <param name="min_ry">${min_ry}</param>
+          <param name="min_rz">${min_rz}</param>
       </hardware>
       <sensor name="${tf_prefix}robotiq_ft_sensor">
         <state_interface name="force.x"/>

@@ -93,6 +93,8 @@ private:
   bool use_fake_mode_;
   int max_retries_ = 100;
   int read_rate_ = 10;
+  double offset_x_, offset_y_, offset_z_, offset_rx_, offset_ry_, offset_rz_;
+  double min_x_, min_y_, min_z_, min_rx_, min_ry_, min_rz_;
   std::string ftdi_id_;
   //
   INT_8 bufStream_[512];

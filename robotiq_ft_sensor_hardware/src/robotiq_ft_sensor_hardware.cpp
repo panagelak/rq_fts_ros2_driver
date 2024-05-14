@@ -50,6 +50,20 @@ hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_init(const hardwa
   max_retries_ = std::stoi(info_.hardware_parameters["max_retries"]);
   read_rate_ = std::stoi(info_.hardware_parameters["read_rate"]);
   ftdi_id_ = info_.hardware_parameters["ftdi_id"];
+  offset_x_ = std::stod(info_.hardware_parameters["offset_x"]);
+  offset_y_ = std::stod(info_.hardware_parameters["offset_y"]);
+  offset_z_ = std::stod(info_.hardware_parameters["offset_z"]);
+  offset_rx_ = std::stod(info_.hardware_parameters["offset_rx"]);
+  offset_ry_ = std::stod(info_.hardware_parameters["offset_ry"]);
+  offset_rz_ = std::stod(info_.hardware_parameters["offset_rz"]);
+  min_x_ = std::stod(info_.hardware_parameters["min_x"]);
+  min_y_ = std::stod(info_.hardware_parameters["min_y"]);
+  min_z_ = std::stod(info_.hardware_parameters["min_z"]);
+  min_rx_ = std::stod(info_.hardware_parameters["min_rx"]);
+  min_ry_ = std::stod(info_.hardware_parameters["min_ry"]);
+  min_rz_ = std::stod(info_.hardware_parameters["min_rz"]);
+  //
+
   if (ftdi_id_.size() == 1)
   {
     ftdi_id_ = "";
@@ -167,7 +181,7 @@ RobotiqFTSensorHardware::on_activate(const rclcpp_lifecycle::State& /*previous_s
   options.arguments({ "--ros-args", "-r", "__node:=robotiq_ft_hardware_internal_" + info_.name });
   async_node_ = rclcpp::Node::make_shared("_", options);
   srv_zero_fts_ = async_node_->create_service<std_srvs::srv::Trigger>(
-      "/io_and_status_controller/zero_ftsensor",
+      "io_and_status_controller/zero_ftsensor",
       std::bind(&RobotiqFTSensorHardware::set_zero, this, std::placeholders::_1, std::placeholders::_2));
   sub_add_wrench_ = async_node_->create_subscription<geometry_msgs::msg::WrenchStamped>(
       "add_fts_wrench", 10, std::bind(&RobotiqFTSensorHardware::wrenchAddCB, this, std::placeholders::_1));
@@ -217,6 +231,28 @@ hardware_interface::return_type RobotiqFTSensorHardware::read(const rclcpp::Time
   {
     hw_sensor_states_ = *(sensor_readings_.readFromRT());
   }
+
+  // remove default
+  hw_sensor_states_[0] += offset_x_;
+  hw_sensor_states_[1] += offset_y_;
+  hw_sensor_states_[2] += offset_z_;
+  hw_sensor_states_[3] += offset_rx_;
+  hw_sensor_states_[4] += offset_ry_;
+  hw_sensor_states_[5] += offset_rz_;
+
+  if (hw_sensor_states_[0] >= -min_x_ && hw_sensor_states_[0] <= min_x_)
+    hw_sensor_states_[0] = 0.0;
+  if (hw_sensor_states_[1] >= -min_y_ && hw_sensor_states_[1] <= min_y_)
+    hw_sensor_states_[1] = 0.0;
+  if (hw_sensor_states_[2] >= -min_z_ && hw_sensor_states_[2] <= min_z_)
+    hw_sensor_states_[2] = 0.0;
+  if (hw_sensor_states_[3] >= -min_rx_ && hw_sensor_states_[3] <= min_rx_)
+    hw_sensor_states_[3] = 0.0;
+  if (hw_sensor_states_[4] >= -min_ry_ && hw_sensor_states_[4] <= min_ry_)
+    hw_sensor_states_[4] = 0.0;
+  if (hw_sensor_states_[5] >= -min_rz_ && hw_sensor_states_[5] <= min_rz_)
+    hw_sensor_states_[5] = 0.0;
+
   // add from add extra wrench topic
   hw_sensor_states_[0] += add_wrench_msg_.wrench.force.x;
   hw_sensor_states_[1] += add_wrench_msg_.wrench.force.y;
@@ -224,6 +260,9 @@ hardware_interface::return_type RobotiqFTSensorHardware::read(const rclcpp::Time
   hw_sensor_states_[3] += add_wrench_msg_.wrench.torque.x;
   hw_sensor_states_[4] += add_wrench_msg_.wrench.torque.y;
   hw_sensor_states_[5] += add_wrench_msg_.wrench.torque.z;
+
+  // thres
+
   return hardware_interface::return_type::OK;
 }
 
