@@ -28,7 +28,7 @@ def generate_launch_description():
     declared_arguments.append(DeclareLaunchArgument("namespace", default_value=""))
     declared_arguments.append(DeclareLaunchArgument("max_retries", default_value="100"))
     declared_arguments.append(DeclareLaunchArgument("read_rate", default_value="10"))
-    declared_arguments.append(DeclareLaunchArgument("ftdi_id", default_value=""))
+    declared_arguments.append(DeclareLaunchArgument("ftdi_id", default_value="ttyUSB1"))
     declared_arguments.append(
         DeclareLaunchArgument("frame_id", default_value="robotiq_ft_frame_id")
     )
