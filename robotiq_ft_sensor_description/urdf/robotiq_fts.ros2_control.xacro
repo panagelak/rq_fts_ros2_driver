@@ -4,6 +4,7 @@
   <xacro:macro name="robotiq_fts_ros2_control" params="
     name
     use_fake_mode:=false
+    use_sim_time:=false
     max_retries:=1
     read_rate:=10
     ftdi_id:=''
@@ -25,6 +26,7 @@
       <hardware>
           <plugin>robotiq_ft_sensor_hardware/RobotiqFTSensorHardware</plugin>
           <param name="use_fake_mode">${use_fake_mode}</param>
+          <param name="use_sim_time">${use_sim_time}</param>
           <param name="max_retries">${max_retries}</param>
           <param name="read_rate">${read_rate}</param>
           <param name="ftdi_id">${ftdi_id}</param>

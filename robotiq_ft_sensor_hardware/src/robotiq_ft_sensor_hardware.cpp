@@ -47,6 +47,8 @@ hardware_interface::CallbackReturn RobotiqFTSensorHardware::on_init(const hardwa
   // parameters
   use_fake_mode_ =
       info_.hardware_parameters["use_fake_mode"] == "True" || info_.hardware_parameters["use_fake_mode"] == "true";
+  use_sim_time_ =
+      info_.hardware_parameters["use_sim_time"] == "True" || info_.hardware_parameters["use_sim_time"] == "true";
   max_retries_ = std::stoi(info_.hardware_parameters["max_retries"]);
   read_rate_ = std::stoi(info_.hardware_parameters["read_rate"]);
   ftdi_id_ = info_.hardware_parameters["ftdi_id"];
@@ -218,6 +220,8 @@ RobotiqFTSensorHardware::on_deactivate(const rclcpp_lifecycle::State& /*previous
 hardware_interface::return_type RobotiqFTSensorHardware::read(const rclcpp::Time& /*time*/,
                                                               const rclcpp::Duration& /*period*/)
 {
+  if (use_sim_time_)
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
   if (use_fake_mode_)
   {
     hw_sensor_states_[0] = 0.0;
