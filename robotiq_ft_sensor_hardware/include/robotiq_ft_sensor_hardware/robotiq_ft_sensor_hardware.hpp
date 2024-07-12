@@ -81,6 +81,7 @@ private:
   // Store the sensor states for the simulated robot
   hardware_interface::ComponentInfo sensor_;
   std::array<double, 6> hw_sensor_states_ = { std::numeric_limits<double>::quiet_NaN() };
+  std::array<double, 6> sensor_state_fake_zero_ = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
   realtime_tools::RealtimeBuffer<std::array<double, 6>> sensor_readings_;
   //=========== robotiq force torque
   rclcpp::Node::SharedPtr async_node_;
@@ -157,10 +158,21 @@ private:
   bool set_zero(std::shared_ptr<std_srvs::srv::Trigger::Request> req,
                 std::shared_ptr<std_srvs::srv::Trigger::Response> res)
   {
+    if (use_fake_mode_)
+    {
+      sensor_state_fake_zero_[0] = hw_sensor_states_[0];
+      sensor_state_fake_zero_[1] = hw_sensor_states_[1];
+      sensor_state_fake_zero_[2] = hw_sensor_states_[2];
+      sensor_state_fake_zero_[3] = hw_sensor_states_[3];
+      sensor_state_fake_zero_[4] = hw_sensor_states_[4];
+      sensor_state_fake_zero_[5] = hw_sensor_states_[5];
+      res->success = true;
+      return true;
+    }
     INT_8 buffer[512];
     std::string set_zero = "SET ZRO";
     decode_message_and_do((char*)set_zero.c_str(), buffer);
-
+    res->success = true;
     return true;
   }
 

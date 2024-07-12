@@ -264,7 +264,15 @@ hardware_interface::return_type RobotiqFTSensorHardware::read(const rclcpp::Time
   hw_sensor_states_[3] += add_wrench_msg_.wrench.torque.x;
   hw_sensor_states_[4] += add_wrench_msg_.wrench.torque.y;
   hw_sensor_states_[5] += add_wrench_msg_.wrench.torque.z;
-
+  if (use_fake_mode_)
+  {
+    hw_sensor_states_[0] -= sensor_state_fake_zero_[0];
+    hw_sensor_states_[1] -= sensor_state_fake_zero_[1];
+    hw_sensor_states_[2] -= sensor_state_fake_zero_[2];
+    hw_sensor_states_[3] -= sensor_state_fake_zero_[3];
+    hw_sensor_states_[4] -= sensor_state_fake_zero_[4];
+    hw_sensor_states_[5] -= sensor_state_fake_zero_[5];
+  }
   // thres
 
   return hardware_interface::return_type::OK;
