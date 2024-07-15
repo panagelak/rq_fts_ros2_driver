@@ -160,12 +160,12 @@ private:
   {
     if (use_fake_mode_)
     {
-      sensor_state_fake_zero_[0] = hw_sensor_states_[0];
-      sensor_state_fake_zero_[1] = hw_sensor_states_[1];
-      sensor_state_fake_zero_[2] = hw_sensor_states_[2];
-      sensor_state_fake_zero_[3] = hw_sensor_states_[3];
-      sensor_state_fake_zero_[4] = hw_sensor_states_[4];
-      sensor_state_fake_zero_[5] = hw_sensor_states_[5];
+      sensor_state_fake_zero_[0] = add_wrench_msg_.wrench.force.x;
+      sensor_state_fake_zero_[1] = add_wrench_msg_.wrench.force.y;
+      sensor_state_fake_zero_[2] = add_wrench_msg_.wrench.force.z;
+      sensor_state_fake_zero_[3] = add_wrench_msg_.wrench.torque.x;
+      sensor_state_fake_zero_[4] = add_wrench_msg_.wrench.torque.y;
+      sensor_state_fake_zero_[5] = add_wrench_msg_.wrench.torque.z;
       res->success = true;
       return true;
     }
