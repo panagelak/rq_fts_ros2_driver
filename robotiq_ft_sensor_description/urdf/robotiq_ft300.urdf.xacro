@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-    <xacro:macro name="robotiq_ft300" params="parent tf_prefix *origin">
+    <xacro:macro name="robotiq_ft300" params="parent tf_prefix *origin mesh_from_package:=true">
 
         <!-- mount the fts to the robot -->
         <joint name="${tf_prefix}ft300_fix" type="fixed">
@@ -21,7 +21,13 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://robotiq_ft_sensor_description/meshes/visual/robotiq_ft300.STL"/>
+                    <xacro:if value="${mesh_from_package}">
+                        <mesh filename="package://robotiq_ft_sensor_description/meshes/visual/robotiq_ft300.STL"/>
+                    </xacro:if>
+                    <xacro:unless value="${mesh_from_package}">
+                        <mesh filename="file://$(find robotiq_ft_sensor_description)/meshes/visual/robotiq_ft300.STL"/>
+                    </xacro:unless>   
+                    
                 </geometry>
                 <material name="Robotiq-Black">
                     <color rgba="0.2 0.2 0.2 1.0"/>
@@ -30,7 +36,13 @@
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://robotiq_ft_sensor_description/meshes/collision/robotiq_ft300.STL"/>
+                    <xacro:if value="${mesh_from_package}">
+                        <mesh filename="package://robotiq_ft_sensor_description/meshes/collision/robotiq_ft300.STL"/>
+                    </xacro:if>
+                    <xacro:unless value="${mesh_from_package}">
+                        <mesh filename="file://$(find robotiq_ft_sensor_description)/meshes/collision/robotiq_ft300.STL"/>
+                    </xacro:unless>   
+                    
                 </geometry>
             </collision>
         </link>
@@ -40,7 +52,12 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://robotiq_ft_sensor_description/meshes/visual/mountings/robotiq_ft300-G-062-COUPLING_G-50-4M6-1D6_20181119.STL"/>
+                    <xacro:if value="${mesh_from_package}">
+                        <mesh filename="package://robotiq_ft_sensor_description/meshes/visual/mountings/robotiq_ft300-G-062-COUPLING_G-50-4M6-1D6_20181119.STL"/>
+                    </xacro:if>
+                    <xacro:unless value="${mesh_from_package}">
+                        <mesh filename="file://$(find robotiq_ft_sensor_description)/meshes/visual/mountings/robotiq_ft300-G-062-COUPLING_G-50-4M6-1D6_20181119.STL"/>
+                    </xacro:unless>   
                 </geometry>
                 <material name="Robotiq-Grey">
                     <color rgba="0.4 0.4 0.4 1.0"/>
@@ -50,7 +67,12 @@
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://robotiq_ft_sensor_description/meshes/collision/mountings/robotiq_ft300-G-062-COUPLING_G-50-4M6-1D6_20181119.STL"/>
+                    <xacro:if value="${mesh_from_package}">
+                        <mesh filename="package://robotiq_ft_sensor_description/meshes/collision/mountings/robotiq_ft300-G-062-COUPLING_G-50-4M6-1D6_20181119.STL"/>
+                    </xacro:if>
+                    <xacro:unless value="${mesh_from_package}">
+                        <mesh filename="file://$(find robotiq_ft_sensor_description)/meshes/collision/mountings/robotiq_ft300-G-062-COUPLING_G-50-4M6-1D6_20181119.STL"/>
+                    </xacro:unless>   
                 </geometry>
             </collision>
         </link>
