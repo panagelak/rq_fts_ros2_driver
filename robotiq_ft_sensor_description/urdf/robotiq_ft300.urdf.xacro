@@ -14,10 +14,15 @@
         <!-- Link representing the FT300 force-torque sensor -->
         <link name="${tf_prefix}ft300_sensor">
             <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <mass value="0.001"/>
+                <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyx="0" iyz="0" izz="0.0001" izx="0" izy="0"/>
+            </inertial>
+            <!-- <inertial>
                 <origin xyz="0 0 ${-17 / 1000}" rpy="0 0 0"/>
                 <mass value="0.300"/>
                 <inertia ixx="${262 / 1000000}" ixy="0" ixz="${1 / 1000000}" iyy="${265 / 1000000}" iyx="0" iyz="${1 / 1000000}" izz="${219 / 1000000}" izx="${-1 / 1000000}" izy="${1 / 1000000}"/>
-            </inertial>
+            </inertial> -->
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
