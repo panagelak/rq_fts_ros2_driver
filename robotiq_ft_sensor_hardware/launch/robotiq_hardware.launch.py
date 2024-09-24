@@ -44,6 +44,7 @@ def launch_setup(context, *args, **kwargs):
             " ",
             "max_retries:=",
             max_retries,
+            " "
             "read_rate:=",
             read_rate,
             " ",
