@@ -116,11 +116,11 @@ static INT_32 rq_com_write_port(UINT_8 const* const buf, UINT_32 buf_len);
 // Modbus functions
 static UINT_16 rq_com_compute_crc(UINT_8 const* adr, INT_32 length);
 static void rq_com_send_fc_03_request(UINT_16 base, UINT_16 n);
-static void rq_com_send_fc_16_request(INT_32 base, INT_32 n, UINT_8 const* const data);
+static void rq_com_send_fc_16_request(INT_32 base, UINT_32 n, UINT_8 const* const data);
 static INT_32 rq_com_wait_for_fc_03_echo(UINT_8* const data);
 static INT_32 rq_com_wait_for_fc_16_echo(void);
 static INT_8 rq_com_send_fc_03(UINT_16 base, UINT_16 n, UINT_16* const data);
-static INT_8 rq_com_send_fc_16(INT_32 base, INT_32 n, UINT_16 const* const data);
+static INT_8 rq_com_send_fc_16(INT_32 base, UINT_32 n, UINT_16 const* const data);
 
 static UINT_8 rq_com_identify_device(INT_8 const* const d_name);
 
@@ -588,18 +588,17 @@ static INT_8 rq_com_send_fc_03(UINT_16 base, UINT_16 n, UINT_16* const data)
 }
 
 /**
- * \fn static INT_8 rq_com_send_fc_16(INT_32 base, INT_32 n, UINT_16 * data)
+ * \fn static INT_8 rq_com_send_fc_16(INT_32 base, UINT_32 n, UINT_16 * data)
  * \brief Sends a write request to a number of registers
  * \param base Address of the first register to write to
  * \param n Number of registers to write
  * \param data buffer that contains data to write
  */
-static INT_8 rq_com_send_fc_16(INT_32 base, INT_32 n, UINT_16 const* const data)
+static INT_8 rq_com_send_fc_16(INT_32 base, UINT_32 n, UINT_16 const* const data)
 {
   INT_8 valid_answer = 0;
   UINT_8 data_request[n];
   UINT_16 retries = 0;
-  UINT_32 i;
 
   // precondition, null pointer
   if (data == NULL)
@@ -607,7 +606,7 @@ static INT_8 rq_com_send_fc_16(INT_32 base, INT_32 n, UINT_16 const* const data)
     return -1;
   }
 
-  for (i = 0; i < n; i++)
+  for (UINT_32 i = 0; i < n; i++)
   {
     if (i % 2 == 0)
     {
@@ -924,12 +923,12 @@ static INT_32 rq_com_wait_for_fc_03_echo(UINT_8* const data)
 }
 
 /**
- * \fn void modbus_send_fc_16_request(INT_32 base, INT_32 n, UINT_8 * data)
+ * \fn void modbus_send_fc_16_request(INT_32 base, UINT_32 n, UINT_8 * data)
  * \brief Sends a fc16 write request
  * \param base Address of the first register to write to
  * \param n Number of bytes to write
  */
-static void rq_com_send_fc_16_request(INT_32 base, INT_32 n, UINT_8 const* const data)
+static void rq_com_send_fc_16_request(INT_32 base, UINT_32 n, UINT_8 const* const data)
 {
   static UINT_8 buf[MP_BUFF_SIZE];
   INT_32 length = 0;
@@ -938,8 +937,7 @@ static void rq_com_send_fc_16_request(INT_32 base, INT_32 n, UINT_8 const* const
   UINT_8 reg[2];
   UINT_8 words[2];
   UINT_16 CRC;
-  INT_32 n2 = 0;
-  INT_32 i = 0;
+  UINT_32 n2 = 0;
 
   if (data == NULL)
   {
@@ -972,7 +970,7 @@ static void rq_com_send_fc_16_request(INT_32 base, INT_32 n, UINT_8 const* const
   buf[length++] = n2;
 
   // Copy data to the send buffer
-  for (i = 0; i < n; i++)
+  for (UINT_32 i = 0; i < n; i++)
   {
     buf[length++] = data[i];
   }
@@ -1120,7 +1118,7 @@ bool rq_com_get_valid_stream()
  */
 float rq_com_get_received_data(UINT_8 i)
 {
-  if (i >= 0 && i <= 5)
+  if (i <= 5)
   {
     return rq_com_received_data[i] - rq_com_received_data_offset[i];
   }

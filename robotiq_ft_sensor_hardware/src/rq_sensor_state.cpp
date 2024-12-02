@@ -239,7 +239,7 @@ static void rq_state_run(unsigned int max_retries)
  */
 float rq_state_get_received_data(UINT_8 i)
 {
-  if (i >= 0 && i <= 5)
+  if (i <= 5)
   {
     return rq_com_get_received_data(i);
   }
