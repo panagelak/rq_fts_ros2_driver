@@ -246,16 +246,59 @@ hardware_interface::return_type RobotiqFTSensorHardware::read(const rclcpp::Time
 
   if (hw_sensor_states_[0] >= -min_x_ && hw_sensor_states_[0] <= min_x_)
     hw_sensor_states_[0] = 0.0;
+  else
+  {
+    if (hw_sensor_states_[0] > 0)
+      hw_sensor_states_[0] -= min_x_;
+    else
+      hw_sensor_states_[0] += min_x_;
+  }
+
   if (hw_sensor_states_[1] >= -min_y_ && hw_sensor_states_[1] <= min_y_)
     hw_sensor_states_[1] = 0.0;
+  else
+  {
+    if (hw_sensor_states_[1] > 0)
+      hw_sensor_states_[1] -= min_x_;
+    else
+      hw_sensor_states_[1] += min_x_;
+  }
   if (hw_sensor_states_[2] >= -min_z_ && hw_sensor_states_[2] <= min_z_)
     hw_sensor_states_[2] = 0.0;
+  else
+  {
+    if (hw_sensor_states_[2] > 0)
+      hw_sensor_states_[2] -= min_x_;
+    else
+      hw_sensor_states_[2] += min_x_;
+  }
   if (hw_sensor_states_[3] >= -min_rx_ && hw_sensor_states_[3] <= min_rx_)
     hw_sensor_states_[3] = 0.0;
+  else
+  {
+    if (hw_sensor_states_[3] > 0)
+      hw_sensor_states_[3] -= min_x_;
+    else
+      hw_sensor_states_[3] += min_x_;
+  }
   if (hw_sensor_states_[4] >= -min_ry_ && hw_sensor_states_[4] <= min_ry_)
     hw_sensor_states_[4] = 0.0;
+  else
+  {
+    if (hw_sensor_states_[4] > 0)
+      hw_sensor_states_[4] -= min_x_;
+    else
+      hw_sensor_states_[4] += min_x_;
+  }
   if (hw_sensor_states_[5] >= -min_rz_ && hw_sensor_states_[5] <= min_rz_)
     hw_sensor_states_[5] = 0.0;
+  else
+  {
+    if (hw_sensor_states_[5] > 0)
+      hw_sensor_states_[5] -= min_x_;
+    else
+      hw_sensor_states_[5] += min_x_;
+  }
 
   // add from add extra wrench topic
   hw_sensor_states_[0] += add_wrench_msg_.wrench.force.x;
