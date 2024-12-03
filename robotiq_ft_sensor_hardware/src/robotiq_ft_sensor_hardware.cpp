@@ -259,45 +259,45 @@ hardware_interface::return_type RobotiqFTSensorHardware::read(const rclcpp::Time
   else
   {
     if (hw_sensor_states_[1] > 0)
-      hw_sensor_states_[1] -= min_x_;
+      hw_sensor_states_[1] -= min_y_;
     else
-      hw_sensor_states_[1] += min_x_;
+      hw_sensor_states_[1] += min_y_;
   }
   if (hw_sensor_states_[2] >= -min_z_ && hw_sensor_states_[2] <= min_z_)
     hw_sensor_states_[2] = 0.0;
   else
   {
     if (hw_sensor_states_[2] > 0)
-      hw_sensor_states_[2] -= min_x_;
+      hw_sensor_states_[2] -= min_z_;
     else
-      hw_sensor_states_[2] += min_x_;
+      hw_sensor_states_[2] += min_z_;
   }
   if (hw_sensor_states_[3] >= -min_rx_ && hw_sensor_states_[3] <= min_rx_)
     hw_sensor_states_[3] = 0.0;
   else
   {
     if (hw_sensor_states_[3] > 0)
-      hw_sensor_states_[3] -= min_x_;
+      hw_sensor_states_[3] -= min_rx_;
     else
-      hw_sensor_states_[3] += min_x_;
+      hw_sensor_states_[3] += min_rx_;
   }
   if (hw_sensor_states_[4] >= -min_ry_ && hw_sensor_states_[4] <= min_ry_)
     hw_sensor_states_[4] = 0.0;
   else
   {
     if (hw_sensor_states_[4] > 0)
-      hw_sensor_states_[4] -= min_x_;
+      hw_sensor_states_[4] -= min_ry_;
     else
-      hw_sensor_states_[4] += min_x_;
+      hw_sensor_states_[4] += min_ry_;
   }
   if (hw_sensor_states_[5] >= -min_rz_ && hw_sensor_states_[5] <= min_rz_)
     hw_sensor_states_[5] = 0.0;
   else
   {
     if (hw_sensor_states_[5] > 0)
-      hw_sensor_states_[5] -= min_x_;
+      hw_sensor_states_[5] -= min_rz_;
     else
-      hw_sensor_states_[5] += min_x_;
+      hw_sensor_states_[5] += min_rz_;
   }
 
   // add from add extra wrench topic
